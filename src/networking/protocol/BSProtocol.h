@@ -1,5 +1,5 @@
-#ifndef MYBS_PROTOCOL_H
-#define MYBS_PROTOCOL_H
+#ifndef BS_PROTOCOL_H
+#define BS_PROTOCOL_H
 
 #include <stdint.h>
 

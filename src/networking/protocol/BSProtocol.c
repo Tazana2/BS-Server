@@ -1,26 +1,26 @@
-#include "mybsprotocol.h"
+#include "BSProtocol.h"
 #include <stdio.h>
 #include <string.h>
 
 const char *message_type_to_str(MessageType type) {
     switch (type) {
-        case MSG_LOGIN: return "LOGIN";
-        case MSG_LOGIN_OK: return "LOGIN_OK";
-        case MSG_USER_LIST: return "USER_LIST";
-        case MSG_USERS: return "USERS";
-        case MSG_USER_CONNECT: return "USER_CONNECT";
-        case MSG_USER_DISCONNECT: return "USER_DISCONNECT";
-        case MSG_INVITE: return "INVITE";
+        case MSG_LOGIN:               return "LOGIN"; // Ready
+        case MSG_LOGIN_OK:            return "LOGIN_OK"; // Ready
+        case MSG_USER_LIST:           return "USER_LIST"; // Implementing....
+        case MSG_USERS:               return "USERS"; // Implementing...
+        case MSG_USER_CONNECT:        return "USER_CONNECT"; // ?
+        case MSG_USER_DISCONNECT:     return "USER_DISCONNECT"; // ?
+        case MSG_INVITE:              return "INVITE";
         case MSG_INVITATION_RECEIVED: return "INVITATION_RECEIVED";
-        case MSG_INVITATION_ACCEPT: return "INVITATION_ACCEPT";
-        case MSG_GAME_START: return "GAME_START";
-        case MSG_ATTACK: return "ATTACK";
-        case MSG_ATTACK_RESULT: return "ATTACK_RESULT";
-        case MSG_TURN_OPPONENT: return "TURN_OPPONENT";
-        case MSG_TURN_YOUR: return "TURN_YOUR";
-        case MSG_GAME_OVER: return "GAME_OVER";
-        case MSG_LOGOUT: return "LOGOUT";
-        default: return "UNKNOWN_MESSAGE_TYPE";
+        case MSG_INVITATION_ACCEPT:   return "INVITATION_ACCEPT";
+        case MSG_GAME_START:          return "GAME_START";
+        case MSG_ATTACK:              return "ATTACK";
+        case MSG_ATTACK_RESULT:       return "ATTACK_RESULT";
+        case MSG_TURN_OPPONENT:       return "TURN_OPPONENT";
+        case MSG_TURN_YOUR:           return "TURN_YOUR";
+        case MSG_GAME_OVER:           return "GAME_OVER";
+        case MSG_LOGOUT:              return "LOGOUT"; // ?
+        default:                      return "UNKNOWN_MESSAGE_TYPE";
     }
 }
 
