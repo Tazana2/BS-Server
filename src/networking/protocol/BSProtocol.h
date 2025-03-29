@@ -23,19 +23,17 @@ typedef enum {
     MSG_TURN_YOUR,
     MSG_GAME_OVER,
     MSG_LOGOUT,
-    MSG_UNKNOWN
+    MSG_UNKNOWN,
+    MSG_ERROR
 } MessageType;
 
 typedef struct {
     MessageType type;
     char data[MAX_DATA_SIZE];
-    uint8_t checksum;
 } MyBSMessage;
 
 const char *message_type_to_str(MessageType type);
 MessageType get_message_type(const char *type_str);
-uint8_t calculate_checksum(const MyBSMessage *msg);
-int verify_checksum(const MyBSMessage *msg);
 void create_message(MyBSMessage *msg, MessageType type, const char *data);
 void serialize_message(const MyBSMessage *msg, char *buffer);
 int parse_message(const char *buffer, MyBSMessage *msg);

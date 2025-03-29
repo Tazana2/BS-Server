@@ -20,6 +20,7 @@ const char *message_type_to_str(MessageType type) {
         case MSG_TURN_YOUR:           return "TURN_YOUR";
         case MSG_GAME_OVER:           return "GAME_OVER";
         case MSG_LOGOUT:              return "LOGOUT"; // ?
+        case MSG_ERROR:               return "ERROR";
         default:                      return "UNKNOWN_MESSAGE_TYPE";
     }
 }
@@ -41,44 +42,28 @@ MessageType get_message_type(const char *type_str) {
     if (strcmp(type_str, "TURN_YOUR") == 0)           return MSG_TURN_YOUR;
     if (strcmp(type_str, "GAME_OVER") == 0)           return MSG_GAME_OVER;
     if (strcmp(type_str, "LOGOUT") == 0)              return MSG_LOGOUT;
+    if (strcmp(type_str, "ERROR") == 0)              return MSG_ERROR;
     return MSG_UNKNOWN; 
-}
-
-uint8_t calculate_checksum(const MyBSMessage *msg) {
-    uint8_t checksum = 0;
-    for (size_t i = 0; i < strlen(msg->data); i++) {
-        checksum ^= msg->data[i];
-    }
-    checksum^= msg->type;
-    return checksum;
-}
-
-int verify_checksum(const MyBSMessage *msg) {
-    return (msg->checksum == calculate_checksum(msg));
 }
 
 void create_message(MyBSMessage *msg, MessageType type, const char *data) {
     msg->type = type;
     strncpy(msg->data, data, MAX_DATA_SIZE - 1);
     msg->data[MAX_DATA_SIZE-1] = '\0';
-    msg->checksum = calculate_checksum(msg);
 }
 
 // Se serializan los mensajes. Básicamente se encarga de que el mensaje tenga una estructura para que el servidor lo pueda recibir y entenderlo
 void serialize_message(const MyBSMessage *msg, char *buffer) {
-    snprintf(buffer, MAX_MESSAGE_SIZE, "%s|%s|%hhu\n", message_type_to_str(msg->type), msg->data, msg->checksum);
+    snprintf(buffer, MAX_MESSAGE_SIZE, "%s|%s\n", message_type_to_str(msg->type), msg->data);
 }
 
 // Esta parte recibe el mensaje y lo "parte" en las partes que contiene: type | data | checksum
 int parse_message(const char *buffer, MyBSMessage *msg) {
     char type_str[50], data[MAX_DATA_SIZE];
-    uint8_t received_checksum;
 
-    sscanf(buffer, "%49[^|] | %199[^|] | %hhu", type_str, data, &received_checksum);
-    // Evitar retornar pq no hay checksum
-    // if (sscanf(buffer, "%49[^|] | %199[^|] | %hhu", type_str, data, &received_checksum) != 3) {
-    //     return -1;
-    // }    
+    if (sscanf(buffer, "%49[^|] | %199[^|]", type_str, data) != 2) {
+        return -1;
+    }    
 
     msg->type = get_message_type(type_str);
 
@@ -87,12 +72,6 @@ int parse_message(const char *buffer, MyBSMessage *msg) {
         msg->data[MAX_DATA_SIZE - 1] = '\0';
     } else {
         msg->data[0] = '\0';
-    }
-
-    msg->checksum = received_checksum;
-
-    if (!verify_checksum(msg)) {
-        return -2;
     }
 
     return 0;

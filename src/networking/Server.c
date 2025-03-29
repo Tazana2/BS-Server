@@ -56,17 +56,10 @@ void handle_client_message(int i) {
 
         // Parsear el mensaje recibido
         MyBSMessage msg;
-        parse_message(buffer, &msg); // No tenemos en cuenta el checksum para el test
-        // if (parse_message(buffer, &msg) < 0) {
-        //     printf("Error al parsear mensaje de %d.\n", clients[i].fd);
-        //     return;
-        // }
-
-        // Verificar checksum
-        // if (!verify_checksum(&msg)) {
-        //     printf("Checksum inválido de %d.\n", clients[i].fd);
-        //     return;
-        // }
+        if (parse_message(buffer, &msg) < 0) {
+            printf("Error al parsear mensaje de %d.\n", clients[i].fd);
+            return;
+        }
 
         switch (msg.type) {
             case MSG_LOGIN: {
