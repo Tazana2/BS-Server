@@ -1,6 +1,6 @@
-#include "BSProtocol.h"
 #include <stdio.h>
 #include <string.h>
+#include "BSProtocol.h"
 
 const char *message_type_to_str(MessageType type) {
     switch (type) {
@@ -66,7 +66,7 @@ void create_message(MyBSMessage *msg, MessageType type, const char *data) {
 
 // Se serializan los mensajes. Básicamente se encarga de que el mensaje tenga una estructura para que el servidor lo pueda recibir y entenderlo
 void serialize_message(const MyBSMessage *msg, char *buffer) {
-    snprintf(buffer, MAX_MESSAGE_SIZE, "%s | %s | %hhu", message_type_to_str(msg->type), msg->data, msg->checksum);
+    snprintf(buffer, MAX_MESSAGE_SIZE, "%s|%s|%hhu\n", message_type_to_str(msg->type), msg->data, msg->checksum);
 }
 
 // Esta parte recibe el mensaje y lo "parte" en las partes que contiene: type | data | checksum
@@ -74,9 +74,11 @@ int parse_message(const char *buffer, MyBSMessage *msg) {
     char type_str[50], data[MAX_DATA_SIZE];
     uint8_t received_checksum;
 
-    if (sscanf(buffer, "%49[^|] | %199[^|] | %hhu", type_str, data, &received_checksum) != 3) {
-        return -1;
-    }    
+    sscanf(buffer, "%49[^|] | %199[^|] | %hhu", type_str, data, &received_checksum);
+    // Evitar retornar pq no hay checksum
+    // if (sscanf(buffer, "%49[^|] | %199[^|] | %hhu", type_str, data, &received_checksum) != 3) {
+    //     return -1;
+    // }    
 
     msg->type = get_message_type(type_str);
 
