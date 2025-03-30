@@ -1,8 +1,6 @@
 #ifndef BS_PROTOCOL_H
 #define BS_PROTOCOL_H
 
-#include <stdint.h>
-
 #define MAX_MESSAGE_SIZE 256
 #define MAX_DATA_SIZE 200
 
@@ -14,6 +12,7 @@ typedef enum {
     MSG_USER_CONNECT,
     MSG_USER_DISCONNECT,
     MSG_INVITE,
+    MSG_INVITE_OK,
     MSG_INVITATION_RECEIVED,
     MSG_INVITATION_ACCEPT,
     MSG_GAME_START,
