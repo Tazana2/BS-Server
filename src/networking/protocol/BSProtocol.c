@@ -4,14 +4,11 @@
 
 const char *message_type_to_str(MessageType type) {
     switch (type) {
-        case MSG_LOGIN:               return "LOGIN"; // Ready
-        case MSG_LOGIN_OK:            return "LOGIN_OK"; // Ready
-        case MSG_USER_LIST:           return "USER_LIST"; // Implementing....
-        case MSG_USERS:               return "USERS"; // Implementing...
-        case MSG_USER_CONNECT:        return "USER_CONNECT"; // ?
-        case MSG_USER_DISCONNECT:     return "USER_DISCONNECT"; // ?
+        case MSG_LOGIN:               return "LOGIN";
+        case MSG_USER_LIST:           return "USER_LIST";
+        case MSG_USER_CONNECT:        return "USER_CONNECT";
+        case MSG_USER_DISCONNECT:     return "USER_DISCONNECT";
         case MSG_INVITE:              return "INVITE";
-        case MSG_INVITE_OK:           return "INVITE_OK";
         case MSG_INVITATION_RECEIVED: return "INVITATION_RECEIVED";
         case MSG_INVITATION_ACCEPT:   return "INVITATION_ACCEPT";
         case MSG_GAME_START:          return "GAME_START";
@@ -20,21 +17,19 @@ const char *message_type_to_str(MessageType type) {
         case MSG_TURN_OPPONENT:       return "TURN_OPPONENT";
         case MSG_TURN_YOUR:           return "TURN_YOUR";
         case MSG_GAME_OVER:           return "GAME_OVER";
-        case MSG_LOGOUT:              return "LOGOUT"; // ?
+        case MSG_LOGOUT:              return "LOGOUT";
         case MSG_ERROR:               return "ERROR";
+        case MSG_OK:                  return "OK";
         default:                      return "UNKNOWN_MESSAGE_TYPE";
     }
 }
 
 MessageType get_message_type(const char *type_str) {
     if (strcmp(type_str, "LOGIN") == 0)               return MSG_LOGIN;
-    if (strcmp(type_str, "LOGIN_OK") == 0)            return MSG_LOGIN_OK;
     if (strcmp(type_str, "USER_LIST") == 0)           return MSG_USER_LIST;
-    if (strcmp(type_str, "USERS") == 0)               return MSG_USERS;
     if (strcmp(type_str, "USER_CONNECT") == 0)        return MSG_USER_CONNECT;
     if (strcmp(type_str, "USER_DISCONNECT") == 0)     return MSG_USER_DISCONNECT;
     if (strcmp(type_str, "INVITE") == 0)              return MSG_INVITE;
-    if (strcmp(type_str, "INVITE_OK") == 0)           return MSG_INVITE_OK;
     if (strcmp(type_str, "INVITATION_RECEIVED") == 0) return MSG_INVITATION_RECEIVED;
     if (strcmp(type_str, "INVITATION_ACCEPT") == 0)   return MSG_INVITATION_ACCEPT;
     if (strcmp(type_str, "GAME_START") == 0)          return MSG_GAME_START;
@@ -44,7 +39,8 @@ MessageType get_message_type(const char *type_str) {
     if (strcmp(type_str, "TURN_YOUR") == 0)           return MSG_TURN_YOUR;
     if (strcmp(type_str, "GAME_OVER") == 0)           return MSG_GAME_OVER;
     if (strcmp(type_str, "LOGOUT") == 0)              return MSG_LOGOUT;
-    if (strcmp(type_str, "ERROR") == 0)              return MSG_ERROR;
+    if (strcmp(type_str, "ERROR") == 0)               return MSG_ERROR;
+    if (strcmp(type_str, "OK") == 0)                  return MSG_OK;
     return MSG_UNKNOWN; 
 }
 

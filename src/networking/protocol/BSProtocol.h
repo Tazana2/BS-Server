@@ -23,7 +23,8 @@ typedef enum {
     MSG_GAME_OVER,
     MSG_LOGOUT,
     MSG_UNKNOWN,
-    MSG_ERROR
+    MSG_ERROR,
+    MSG_OK
 } MessageType;
 
 typedef struct {
