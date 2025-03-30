@@ -1,21 +1,13 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
-PTL_DIR = protocol
-NTW_DIR = networking
-OBJ_DIR = build
+CFLAGS = -Wall -Wextra -Igame_models -Inetworking/protocol -lpthread
+SRC = networking/server.c networking/protocol/BSProtocol.c game_models/player.c game_models/player_table.c game_models/invitation_table.c 
+OBJ = $(SRC:.c=.o)
+EXEC = server
 
-SRCS = $(NTW_DIR)/Server.c $(NTW_DIR)/$(PTL_DIR)/BSProtocol.c
-OBJS = $(SRCS:.c=.o)
+all: $(EXEC)
 
-TARGETS = server 
-
-all: $(TARGETS)
-
-server: networking/Server.o networking/protocol/BSProtocol.o
-	$(CC) $(CFLAGS) -o server networking/Server.o networking/protocol/BSProtocol.o
-
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(EXEC): $(OBJ)
+	$(CC) $(CFLAGS) -o $(EXEC) $(OBJ)
 
 clean:
-	rm -f $(OBJS) $(TARGETS)
+	rm -f $(OBJ) $(EXEC)
