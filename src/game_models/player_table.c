@@ -80,6 +80,22 @@ Player *get_player(PlayerTable *table, const char *username) {
     return NULL;
 }
 
+// Obtener un jugador por su socket
+Player *get_player_by_socket(PlayerTable *table, int socket_fd) {
+    if (!table) return NULL;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        PlayerNode *node = table->table[i];
+        while (node) {
+            if (node->player->socket_fd == socket_fd) {
+                return node->player;
+            }
+            node = node->next;
+        }
+    }
+    return NULL;
+}
+
 // Eliminar un jugador de la tabla
 int remove_player(PlayerTable *table, const char *username, const int socket_fd) {
     if (!table) return 0;
