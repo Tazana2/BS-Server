@@ -15,11 +15,13 @@ const char *message_type_to_str(MessageType type) {
         case MSG_ATTACK:              return "ATTACK";
         case MSG_ATTACK_RESULT:       return "ATTACK_RESULT";
         case MSG_TURN_OPPONENT:       return "TURN_OPPONENT";
+        case MSG_ATTACK_INCOMING:     return "ATTACK_INCOMING";
         case MSG_TURN_YOUR:           return "TURN_YOUR";
         case MSG_GAME_OVER:           return "GAME_OVER";
         case MSG_LOGOUT:              return "LOGOUT";
         case MSG_ERROR:               return "ERROR";
         case MSG_OK:                  return "OK";
+        case MSG_UNKNOWN:              return "UNKNOWN";
         default:                      return "UNKNOWN_MESSAGE_TYPE";
     }
 }
@@ -36,6 +38,7 @@ MessageType get_message_type(const char *type_str) {
     if (strcmp(type_str, "ATTACK") == 0)              return MSG_ATTACK;
     if (strcmp(type_str, "ATTACK_RESULT") == 0)       return MSG_ATTACK_RESULT;
     if (strcmp(type_str, "TURN_OPPONENT") == 0)       return MSG_TURN_OPPONENT;
+    if (strcmp(type_str, "ATTACK_INCOMING") == 0)       return MSG_ATTACK_INCOMING;
     if (strcmp(type_str, "TURN_YOUR") == 0)           return MSG_TURN_YOUR;
     if (strcmp(type_str, "GAME_OVER") == 0)           return MSG_GAME_OVER;
     if (strcmp(type_str, "LOGOUT") == 0)              return MSG_LOGOUT;
