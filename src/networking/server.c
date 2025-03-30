@@ -102,12 +102,12 @@ void process_message(Server *server, int client_index, const char *buffer) {
                 break;
             }
             printf("Usuario %s conectado con socket %d\n", check->username, check->socket_fd);
-            create_message(&response, MSG_LOGIN_OK, "Bienvenido.");
+            create_message(&response, MSG_OK, "Bienvenido.");
             break;
         case MSG_LOGOUT:
             printf("Usuario cerrando sesión: %s\n", msg.data);
             if (remove_player(server->player_table, msg.data, server->clients[client_index].fd)) {
-                create_message(&response, MSG_LOGOUT, "Sesión cerrada, Adiós.");
+                create_message(&response, MSG_OK, "Sesión cerrada, Adiós.");
                 printf("Usuario %s desconectado\n", msg.data);
             } else {
                 printf("Error al cerrar sesión para %s\n", msg.data);
@@ -118,35 +118,31 @@ void process_message(Server *server, int client_index, const char *buffer) {
             printf("Solicitando lista de usuarios\n");
             char user_list[BUFFER_SIZE];
             get_user_list(server->player_table, user_list);
-            create_message(&response, MSG_USERS, user_list);
+            create_message(&response, MSG_OK, user_list);
             break;
         case MSG_ATTACK:
             printf("Ataque recibido de %s: %s\n", msg.data, msg.data);
             create_message(&response, MSG_ATTACK_RESULT, "Ataque procesado.");
             break;
         case MSG_INVITE: {
-            char sender[50], receiver[50];
-            sscanf(msg.data, "%s %s", sender, receiver);
-            printf("Invitación de %s a %s\n", sender, receiver);
-            if (strcmp(sender, receiver) == 0) {
-                create_message(&response, MSG_ERROR, "No puedes invitarte a ti mismo.");
-                break;
-            }
-            Player *sender_player = get_player(server->player_table, sender);
+            Player *sender_player = get_player_by_socket(server->player_table, server->clients[client_index].fd);
+            char receiver[50];
+            sscanf(msg.data, "%s", receiver);
+            printf("Invitación de %s a %s\n", sender_player->username, receiver);
             Player *target_player = get_player(server->player_table, receiver);
             if (!sender_player || !target_player) {
                 create_message(&response, MSG_ERROR, "Usuario no encontrado.");
+                break;
+            }
+            if (strcmp(sender_player->username, receiver) == 0) {
+                create_message(&response, MSG_ERROR, "No puedes invitarte a ti mismo.");
                 break;
             }
             
             // add_invitation(server->invitation_table, sender, receiver);
 
             // Notificar al usuario que envía la invitación
-            char sender_buffer[BUFFER_SIZE];
-            MyBSMessage sender_msg;
-            create_message(&sender_msg, MSG_INVITE_OK, "Invitación enviada");
-            serialize_message(&sender_msg, sender_buffer);
-            send(sender_player->socket_fd, sender_buffer, strlen(sender_buffer), 0);
+            create_message(&response, MSG_OK, "Invitación enviada");
 
             // Notificar al usuario invitado
             MyBSMessage invite_notification;
@@ -170,6 +166,9 @@ void process_message(Server *server, int client_index, const char *buffer) {
     } else {
         serialize_message(&response, response_buffer);
         send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        // Limpiar el mensaje de respuesta
+        memset(&response, 0, sizeof(MyBSMessage));
+        memset(response_buffer, 0, sizeof(response_buffer));
     }
 }
 
@@ -198,6 +197,8 @@ void run_server(Server *server) {
                 
                 if (bytes_received <= 0) {
                     printf("Cliente desconectado\n");
+                    Player *player = get_player_by_socket(server->player_table, server->clients[i].fd);
+                    remove_player(server->player_table, player->username, server->clients[i].fd);
                     close(server->clients[i].fd);
                     server->clients[i].fd = -1;
                 } else {
