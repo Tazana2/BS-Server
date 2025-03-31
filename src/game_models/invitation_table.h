@@ -1,4 +1,3 @@
-/* invitation_table.h */
 #ifndef INVITATION_TABLE_H
 #define INVITATION_TABLE_H
 
@@ -19,10 +18,10 @@ typedef struct {
 } InvitationTable;
 
 InvitationTable *create_invitation_table();
-void add_invitation(InvitationTable *table, const char *sender, const char *receiver);
 int find_invitation(InvitationTable *table, const char *sender, const char *receiver);
+void add_invitation(InvitationTable *table, const char *sender, const char *receiver);
 void remove_invitation(InvitationTable *table, const char *sender, const char *receiver);
 void destroy_invitation_table(InvitationTable *table);
 void print_invitations(InvitationTable *table);
 
-#endif /* INVITATION_TABLE_H */
+#endif // INVITATION_TABLE_H

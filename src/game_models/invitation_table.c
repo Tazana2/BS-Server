@@ -1,4 +1,3 @@
-/* invitation_table.c */
 #include "invitation_table.h"
 
 InvitationTable *create_invitation_table() {
@@ -7,6 +6,18 @@ InvitationTable *create_invitation_table() {
         table->head = NULL;
     }
     return table;
+}
+
+int find_invitation(InvitationTable *table, const char *sender, const char *receiver) {
+    if (!table) return 0;
+    Invitation *current = table->head;
+    while (current) {
+        if (strcmp(current->sender, sender) == 0 && strcmp(current->receiver, receiver) == 0) {
+            return 1;
+        }
+        current = current->next;
+    }
+    return 0;
 }
 
 void add_invitation(InvitationTable *table, const char *sender, const char *receiver) {
@@ -21,18 +32,6 @@ void add_invitation(InvitationTable *table, const char *sender, const char *rece
     
     new_inv->next = table->head;
     table->head = new_inv;
-}
-
-int find_invitation(InvitationTable *table, const char *sender, const char *receiver) {
-    if (!table) return 0;
-    Invitation *current = table->head;
-    while (current) {
-        if (strcmp(current->sender, sender) == 0 && strcmp(current->receiver, receiver) == 0) {
-            return 1;
-        }
-        current = current->next;
-    }
-    return 0;
 }
 
 void remove_invitation(InvitationTable *table, const char *sender, const char *receiver) {

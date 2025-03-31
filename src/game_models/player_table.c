@@ -1,9 +1,7 @@
-// player_table.c
 #include "player_table.h"
-
 #include <stdio.h>
 
-// Función hash simple para calcular el índice basado en el nombre de usuario
+// Simple hash function for the player username
 static unsigned int hash_function(const char *username) {
     unsigned int hash = 0;
     while (*username) {
@@ -13,7 +11,6 @@ static unsigned int hash_function(const char *username) {
     return hash % MAX_PLAYERS;
 }
 
-// Crear una nueva tabla de jugadores
 PlayerTable *create_player_table() {
     PlayerTable *table = (PlayerTable *)malloc(sizeof(PlayerTable));
     if (table) {
@@ -22,32 +19,15 @@ PlayerTable *create_player_table() {
     return table;
 }
 
-// Destruir la tabla de jugadores y liberar memoria
-void destroy_player_table(PlayerTable *table) {
-    if (!table) return;
-    
-    for (int i = 0; i < MAX_PLAYERS; i++) {
-        PlayerNode *node = table->table[i];
-        while (node) {
-            PlayerNode *temp = node;
-            node = node->next;
-            destroy_player(temp->player);
-            free(temp);
-        }
-    }
-    free(table);
-}
-
-// Agregar un jugador a la tabla
 Player *add_player(PlayerTable *table, const char *username, int socket_fd) {
     if (!table) return NULL;
     
     unsigned int index = hash_function(username);
-    // Verificar si el jugador ya existe
+    // Check if the player already exists
     PlayerNode *node = table->table[index];
     while (node) {
         if (strcmp(node->player->username, username) == 0) {
-            // El jugador ya existe, no se agrega
+            // The player already exists, return NULL
             return NULL;
         }
         node = node->next;
@@ -63,7 +43,6 @@ Player *add_player(PlayerTable *table, const char *username, int socket_fd) {
     return new_node->player;
 }
 
-// Obtener un jugador por su nombre de usuario
 Player *get_player(PlayerTable *table, const char *username) {
     if (!table) return NULL;
     
@@ -80,7 +59,6 @@ Player *get_player(PlayerTable *table, const char *username) {
     return NULL;
 }
 
-// Obtener un jugador por su socket
 Player *get_player_by_socket(PlayerTable *table, int socket_fd) {
     if (!table) return NULL;
     
@@ -96,7 +74,6 @@ Player *get_player_by_socket(PlayerTable *table, int socket_fd) {
     return NULL;
 }
 
-// Eliminar un jugador de la tabla
 int remove_player(PlayerTable *table, const char *username, const int socket_fd) {
     if (!table) return 0;
     
@@ -113,15 +90,14 @@ int remove_player(PlayerTable *table, const char *username, const int socket_fd)
             }
             destroy_player(node->player);
             free(node);
-            return 1; // Jugador eliminado
+            return 1; // Player removed
         }
         prev = node;
         node = node->next;
     }
-    return 0; // Jugador no encontrado o no coincide con el socket_fd
+    return 0; // Player not found or the socket_fd does not match
 }
 
-// Obtener la lista de jugadores en formato de cadena
 void get_user_list(PlayerTable *table, char *user_list) {
     if (!table || !user_list) return;
     
@@ -134,4 +110,19 @@ void get_user_list(PlayerTable *table, char *user_list) {
             node = node->next;
         }
     }
+}
+
+void destroy_player_table(PlayerTable *table) {
+    if (!table) return;
+    
+    for (int i = 0; i < MAX_PLAYERS; i++) {
+        PlayerNode *node = table->table[i];
+        while (node) {
+            PlayerNode *temp = node;
+            node = node->next;
+            destroy_player(temp->player);
+            free(temp);
+        }
+    }
+    free(table);
 }

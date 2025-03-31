@@ -4,13 +4,18 @@
 
 const char *message_type_to_str(MessageType type) {
     switch (type) {
+        // Session
         case MSG_LOGIN:               return "LOGIN";
+        case MSG_LOGOUT:              return "LOGOUT";
         case MSG_USER_LIST:           return "USER_LIST";
         case MSG_USER_CONNECT:        return "USER_CONNECT";
         case MSG_USER_DISCONNECT:     return "USER_DISCONNECT";
+        // Invitation
         case MSG_INVITE:              return "INVITE";
-        case MSG_INVITATION_RECEIVED: return "INVITATION_RECEIVED";
-        case MSG_INVITATION_ACCEPT:   return "INVITATION_ACCEPT";
+        case MSG_INVITE_FROM:         return "INVITE_FROM";
+        case MSG_INVITE_ACK:          return "INVITE_ACK";
+        case MSG_INVITE_RESPONSE:     return "INVITE_RESPONSE";
+        // Game
         case MSG_GAME_START:          return "GAME_START";
         case MSG_ATTACK:              return "ATTACK";
         case MSG_ATTACK_RESULT:       return "ATTACK_RESULT";
@@ -18,30 +23,35 @@ const char *message_type_to_str(MessageType type) {
         case MSG_ATTACK_INCOMING:     return "ATTACK_INCOMING";
         case MSG_TURN_YOUR:           return "TURN_YOUR";
         case MSG_GAME_OVER:           return "GAME_OVER";
-        case MSG_LOGOUT:              return "LOGOUT";
+        // Status and error messages
         case MSG_ERROR:               return "ERROR";
         case MSG_OK:                  return "OK";
-        case MSG_UNKNOWN:              return "UNKNOWN";
+        case MSG_UNKNOWN:             return "UNKNOWN";
         default:                      return "UNKNOWN_MESSAGE_TYPE";
     }
 }
 
 MessageType get_message_type(const char *type_str) {
+    // Session
     if (strcmp(type_str, "LOGIN") == 0)               return MSG_LOGIN;
+    if (strcmp(type_str, "LOGOUT") == 0)              return MSG_LOGOUT;
     if (strcmp(type_str, "USER_LIST") == 0)           return MSG_USER_LIST;
     if (strcmp(type_str, "USER_CONNECT") == 0)        return MSG_USER_CONNECT;
     if (strcmp(type_str, "USER_DISCONNECT") == 0)     return MSG_USER_DISCONNECT;
+    // Invitation
     if (strcmp(type_str, "INVITE") == 0)              return MSG_INVITE;
-    if (strcmp(type_str, "INVITATION_RECEIVED") == 0) return MSG_INVITATION_RECEIVED;
-    if (strcmp(type_str, "INVITATION_ACCEPT") == 0)   return MSG_INVITATION_ACCEPT;
+    if (strcmp(type_str, "INVITE_FROM") == 0)         return MSG_INVITE_FROM;
+    if (strcmp(type_str, "INVITE_ACK") == 0)          return MSG_INVITE_ACK;
+    if (strcmp(type_str, "INVITE_RESPONSE") == 0)     return MSG_INVITE_RESPONSE;
+    // Game
     if (strcmp(type_str, "GAME_START") == 0)          return MSG_GAME_START;
     if (strcmp(type_str, "ATTACK") == 0)              return MSG_ATTACK;
     if (strcmp(type_str, "ATTACK_RESULT") == 0)       return MSG_ATTACK_RESULT;
     if (strcmp(type_str, "TURN_OPPONENT") == 0)       return MSG_TURN_OPPONENT;
-    if (strcmp(type_str, "ATTACK_INCOMING") == 0)       return MSG_ATTACK_INCOMING;
+    if (strcmp(type_str, "ATTACK_INCOMING") == 0)     return MSG_ATTACK_INCOMING;
     if (strcmp(type_str, "TURN_YOUR") == 0)           return MSG_TURN_YOUR;
     if (strcmp(type_str, "GAME_OVER") == 0)           return MSG_GAME_OVER;
-    if (strcmp(type_str, "LOGOUT") == 0)              return MSG_LOGOUT;
+    // Status and error messages
     if (strcmp(type_str, "ERROR") == 0)               return MSG_ERROR;
     if (strcmp(type_str, "OK") == 0)                  return MSG_OK;
     return MSG_UNKNOWN; 
@@ -53,11 +63,11 @@ void create_message(MyBSMessage *msg, MessageType type, const char *data) {
         strncpy(msg->data, data, MAX_DATA_SIZE - 1);
         // msg->data[strlen(msg->data) - 1] = '\0';
     } else {
-        msg->data[0] = '\0';  // Si data es NULL, inicializar con cadena vacía
+        msg->data[0] = '\0';  // If data is NULL, set it to an empty string
     }
 }
 
-// Se serializan los mensajes. Básicamente se encarga de que el mensaje tenga una estructura para que el servidor lo pueda recibir y entenderlo
+// Ensures that the server can understand the message.
 void serialize_message(const MyBSMessage *msg, char *buffer) {
     if (strlen(msg->data) > 0) {
         snprintf(buffer, MAX_MESSAGE_SIZE, "%s|%s\n", message_type_to_str(msg->type), msg->data);
@@ -66,7 +76,8 @@ void serialize_message(const MyBSMessage *msg, char *buffer) {
     }
 }
 
-// Esta parte recibe el mensaje y lo "parte" en las partes que contiene: type | data | checksum
+// Split the message into its components and store them in the MyBSMessage struct
+// The message format is "type|data" (e.g., "LOGIN|username")
 int parse_message(const char *buffer, MyBSMessage *msg) {
     char type_str[50], data[MAX_DATA_SIZE];
 
@@ -85,5 +96,3 @@ int parse_message(const char *buffer, MyBSMessage *msg) {
 
     return 0;
 }
-
-// La checksum se considera quitar, hay otros métodos y TCP es bastante seguro

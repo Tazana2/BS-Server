@@ -1,25 +1,23 @@
-// server.c
 #include "server.h"
 
-// Crear y configurar el servidor
 Server *create_server(int port) {
     Server *server = (Server *)malloc(sizeof(Server));
     if (!server) {
-        perror("Error al asignar memoria para el servidor");
+        perror("ERROR: Couldn't allocate memory for server.");
         return NULL;
     }
     
     server->player_table = create_player_table();
     server->invitation_table = create_invitation_table();
     if (!server->player_table || !server->invitation_table) {
-        perror("Error al crear estructuras de datos");
+        perror("ERROR: Something went wrong with player table or invitation table.");
         free(server);
         return NULL;
     }
     
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd == -1) {
-        perror("Error al crear el socket");
+        perror("ERROR: Something went wrong with socket.");
         destroy_player_table(server->player_table);
         free(server);
         return NULL;
@@ -32,7 +30,7 @@ Server *create_server(int port) {
     server_addr.sin_port = htons(port);
     
     if (bind(server->server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
-        perror("Error en bind");
+        perror("ERROR: Something went wrong with bind.");
         close(server->server_fd);
         destroy_player_table(server->player_table);
         destroy_invitation_table(server->invitation_table);
@@ -41,7 +39,7 @@ Server *create_server(int port) {
     }
     
     if (listen(server->server_fd, MAX_CLIENTS) == -1) {
-        perror("Error en listen");
+        perror("ERROR: Something went wrong with listen.");
         close(server->server_fd);
         destroy_player_table(server->player_table);
         destroy_invitation_table(server->invitation_table);
@@ -54,125 +52,10 @@ Server *create_server(int port) {
         server->clients[i].events = POLLIN;
     }
     
-    printf("Servidor iniciado en el puerto %d\n", port);
+    printf("Server running on port: %d.\n", port);
     return server;
 }
 
-// Aceptar nuevos clientes
-void accept_new_client(Server *server) {
-    struct sockaddr_in client_addr;
-    socklen_t client_len = sizeof(client_addr);
-    int new_socket = accept(server->server_fd, (struct sockaddr *)&client_addr, &client_len);
-    
-    if (new_socket == -1) {
-        perror("Error al aceptar nuevo cliente");
-        return;
-    }
-    
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (server->clients[i].fd == -1) {
-            server->clients[i].fd = new_socket;
-            printf("Nuevo cliente conectado: %d\n", new_socket);
-            return;
-        }
-    }
-    
-    printf("Servidor lleno, rechazando nueva conexión\n");
-    close(new_socket);
-}
-
-// Procesar mensajes recibidos
-void process_message(Server *server, int client_index, const char *buffer) {
-    MyBSMessage msg;
-    if (parse_message(buffer, &msg) == -1) {
-        printf("Error al parsear el mensaje\n");
-        return;
-    }
-    
-    char response_buffer[BUFFER_SIZE];
-    MyBSMessage response;
-    msg.data[strcspn(msg.data, "\n")] = 0; // Eliminar el salto de línea al final del mensaje
-    
-    switch (msg.type) {
-        case MSG_LOGIN:
-            printf("Usuario intentando iniciar sesión: %s\n", msg.data);
-            Player *check = add_player(server->player_table, msg.data, server->clients[client_index].fd);
-            if (!check) {
-                create_message(&response, MSG_ERROR, "No se pudo iniciar sesión.");
-                break;
-            }
-            printf("Usuario %s conectado con socket %d\n", check->username, check->socket_fd);
-            create_message(&response, MSG_OK, "Bienvenido.");
-            break;
-        case MSG_LOGOUT:
-            printf("Usuario cerrando sesión: %s\n", msg.data);
-            if (remove_player(server->player_table, msg.data, server->clients[client_index].fd)) {
-                create_message(&response, MSG_OK, "Sesión cerrada, Adiós.");
-                printf("Usuario %s desconectado\n", msg.data);
-            } else {
-                printf("Error al cerrar sesión para %s\n", msg.data);
-                create_message(&response, MSG_ERROR, "Error al cerrar sesión.");
-            }
-            break;
-        case MSG_USER_LIST:
-            printf("Solicitando lista de usuarios\n");
-            char user_list[BUFFER_SIZE];
-            get_user_list(server->player_table, user_list);
-            create_message(&response, MSG_OK, user_list);
-            break;
-        case MSG_ATTACK:
-            printf("Ataque recibido de %s: %s\n", msg.data, msg.data);
-            create_message(&response, MSG_ATTACK_RESULT, "Ataque procesado.");
-            break;
-        case MSG_INVITE: {
-            Player *sender_player = get_player_by_socket(server->player_table, server->clients[client_index].fd);
-            char receiver[50];
-            sscanf(msg.data, "%s", receiver);
-            printf("Invitación de %s a %s\n", sender_player->username, receiver);
-            Player *target_player = get_player(server->player_table, receiver);
-            if (!sender_player || !target_player) {
-                create_message(&response, MSG_ERROR, "Usuario no encontrado.");
-                break;
-            }
-            if (strcmp(sender_player->username, receiver) == 0) {
-                create_message(&response, MSG_ERROR, "No puedes invitarte a ti mismo.");
-                break;
-            }
-            
-            // add_invitation(server->invitation_table, sender, receiver);
-
-            // Notificar al usuario que envía la invitación
-            create_message(&response, MSG_OK, "Invitación enviada");
-
-            // Notificar al usuario invitado
-            MyBSMessage invite_notification;
-            create_message(&invite_notification, MSG_INVITATION_RECEIVED, "Has recibido una invitación");
-            char invite_buffer[BUFFER_SIZE];
-            serialize_message(&invite_notification, invite_buffer);
-            send(target_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
-            break;
-        }            
-        default:
-            printf("Mensaje desconocido: %s\n", msg.data);
-            create_message(&response, MSG_ERROR, "Comando no reconocido.");
-            break;
-    }
-    // Enviar respuesta al cliente
-    if (response.type == MSG_LOGOUT) {
-        serialize_message(&response, response_buffer);
-        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
-        close(server->clients[client_index].fd);
-        server->clients[client_index].fd = -1;
-    } else {
-        serialize_message(&response, response_buffer);
-        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
-        // Limpiar el mensaje de respuesta
-        memset(&response, 0, sizeof(MyBSMessage));
-        memset(response_buffer, 0, sizeof(response_buffer));
-    }
-}
-
-// Bucle principal del servidor
 void run_server(Server *server) {
     if (!server) return;
     
@@ -182,10 +65,9 @@ void run_server(Server *server) {
         
         int activity = poll(server->clients, MAX_CLIENTS, -1);
         if (activity == -1) {
-            perror("Error en poll");
+            perror("ERROR: Something went wrong with poll.");
             break;
         }
-        
         if (server->clients[0].revents & POLLIN) {
             accept_new_client(server);
         }
@@ -196,7 +78,7 @@ void run_server(Server *server) {
                 int bytes_received = recv(server->clients[i].fd, buffer, BUFFER_SIZE, 0);
                 
                 if (bytes_received <= 0) {
-                    printf("Cliente desconectado\n");
+                    printf("Client disconnected.\n");
                     Player *player = get_player_by_socket(server->player_table, server->clients[i].fd);
                     remove_player(server->player_table, player->username, server->clients[i].fd);
                     close(server->clients[i].fd);
@@ -210,10 +92,8 @@ void run_server(Server *server) {
     }
 }
 
-// Detener el servidor y liberar recursos
 void stop_server(Server *server) {
     if (!server) return;
-    
     close(server->server_fd);
     destroy_player_table(server->player_table);
     destroy_invitation_table(server->invitation_table);
@@ -225,7 +105,142 @@ void stop_server(Server *server) {
     }
     
     free(server);
-    printf("Servidor detenido\n");
+    printf("Server Stopped.\n");
+}
+
+void accept_new_client(Server *server) {
+    struct sockaddr_in client_addr;
+    socklen_t client_len = sizeof(client_addr);
+    int new_socket = accept(server->server_fd, (struct sockaddr *)&client_addr, &client_len);
+    
+    if (new_socket == -1) {
+        perror("ERROR: Something went wrong with accept.");
+        return;
+    }
+    
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (server->clients[i].fd == -1) {
+            server->clients[i].fd = new_socket;
+            printf("New connection on socket: %d.\n", new_socket);
+            return;
+        }
+    }
+    
+    printf("Server is full, rejecting connection.\n");
+    close(new_socket);
+}
+
+void process_message(Server *server, int client_index, const char *buffer) {
+    MyBSMessage msg;
+    if (parse_message(buffer, &msg) == -1) {
+        printf("ERROR: Couldn't parse the message.\n");
+        return;
+    }
+    
+    char response_buffer[BUFFER_SIZE];
+    MyBSMessage response;
+    msg.data[strcspn(msg.data, "\n")] = 0; // If the message has a newline, remove it
+    
+    switch (msg.type) {
+        case MSG_LOGIN:
+            printf("Login try with username: %s\n", msg.data);
+            Player *check = add_player(server->player_table, msg.data, server->clients[client_index].fd);
+            if (!check) {
+                create_message(&response, MSG_ERROR, "Couldn't add player.");
+                break;
+            }
+            printf("User (%s) connected on socket: %d\n", check->username, check->socket_fd);
+            create_message(&response, MSG_OK, "Welcome.");
+            break;
+        case MSG_LOGOUT:
+            printf("User (%s) is trying to logout.\n", msg.data);
+            if (remove_player(server->player_table, msg.data, server->clients[client_index].fd)) {
+                create_message(&response, MSG_OK, "Session closed. Bye!");
+                printf("User (%s) disconnected.\n", msg.data);
+            } else {
+                printf("ERROR: Couldn't disconnect (%s).\n", msg.data);
+                create_message(&response, MSG_ERROR, "Couldn't disconnect.");
+            }
+            break;
+        case MSG_USER_LIST:
+            char user_list[BUFFER_SIZE];
+            get_user_list(server->player_table, user_list);
+            create_message(&response, MSG_OK, user_list);
+            break;
+        case MSG_ATTACK:
+            printf("Attack command from (%s).\n", msg.data);
+            create_message(&response, MSG_ATTACK_RESULT, "For the moment, this is a placeholder for the attack result.");
+            break;
+        case MSG_INVITE: {
+            Player *sender_player = get_player_by_socket(server->player_table, server->clients[client_index].fd);
+            char receiver[50];
+            sscanf(msg.data, "%s", receiver);
+            Player *target_player = get_player(server->player_table, receiver);
+            if (!sender_player || !target_player) {
+                create_message(&response, MSG_ERROR, "User not found.");
+                break;
+            }
+            if (strcmp(sender_player->username, receiver) == 0) {
+                create_message(&response, MSG_ERROR, "You cannot invite yourself.");
+                break;
+            }
+            add_invitation(server->invitation_table, sender_player->username, target_player->username);
+            
+            // Server response to the sender
+            create_message(&response, MSG_OK, "Invitation sent.");
+            
+            // Notify the target player
+            MyBSMessage invite_notification;
+            create_message(&invite_notification, MSG_INVITE_FROM, sender_player->username);
+            char invite_buffer[BUFFER_SIZE];
+            serialize_message(&invite_notification, invite_buffer);
+            send(target_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
+            printf("(%s) just invited (%s) to a game.\n", sender_player->username, receiver);
+            break;
+        }
+        case MSG_INVITE_ACK: {
+            char receiver[50], invite_status[10];
+            sscanf(msg.data, "%s %s", receiver, invite_status);
+            // Verify if the invitation exists
+            Player *sender_player = get_player_by_socket(server->player_table, server->clients[client_index].fd);
+            Player *target_player = get_player(server->player_table, receiver);
+            if (find_invitation(server->invitation_table, target_player->username, sender_player->username) == 0) {
+                create_message(&response, MSG_ERROR, "You have no invitation from this user.");
+                break;
+            }
+            
+            // Server response to the sender
+            create_message(&response, MSG_OK, "Response sent.");
+            
+            // Notify the target player
+            MyBSMessage invite_notification;
+            char invite_buffer[BUFFER_SIZE];
+            snprintf(invite_buffer, sizeof(invite_buffer), "%s %s", sender_player->username, invite_status);
+            
+            create_message(&invite_notification, MSG_INVITE_RESPONSE, invite_buffer);
+            serialize_message(&invite_notification, invite_buffer);
+            send(target_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
+            printf("(%s) responded the invitation of (%s).\n", sender_player->username, receiver);
+            break;
+        }            
+        default:
+            printf("Unknown message: %s\n", msg.data);
+            create_message(&response, MSG_ERROR, "Unknown command.");
+            break;
+    }
+    // Send the response to the client
+    if (response.type == MSG_LOGOUT) {
+        serialize_message(&response, response_buffer);
+        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        close(server->clients[client_index].fd);
+        server->clients[client_index].fd = -1;
+    } else {
+        serialize_message(&response, response_buffer);
+        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        // Reset the response message to avoid sending old data
+        memset(&response, 0, sizeof(MyBSMessage));
+        memset(response_buffer, 0, sizeof(response_buffer));
+    }
 }
 
 int main() {

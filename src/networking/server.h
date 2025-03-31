@@ -1,4 +1,3 @@
-// server.h
 #ifndef SERVER_H
 #define SERVER_H
 
@@ -16,7 +15,6 @@
 #define SERVER_PORT 12345
 #define BUFFER_SIZE 256
 
-// Estructura del servidor
 typedef struct {
     int server_fd;
     struct pollfd clients[MAX_CLIENTS];
