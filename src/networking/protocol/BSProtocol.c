@@ -19,13 +19,13 @@ const char *message_type_to_str(MessageType type) {
         case MSG_GAME_START:          return "GAME_START";
         case MSG_ATTACK:              return "ATTACK";
         case MSG_ATTACK_RESULT:       return "ATTACK_RESULT";
-        case MSG_TURN_OPPONENT:       return "TURN_OPPONENT";
+        case MSG_TURN:                return "TURN";
         case MSG_ATTACK_INCOMING:     return "ATTACK_INCOMING";
-        case MSG_TURN_YOUR:           return "TURN_YOUR";
         case MSG_GAME_OVER:           return "GAME_OVER";
         // Status and error messages
-        case MSG_ERROR:               return "ERROR";
         case MSG_OK:                  return "OK";
+        case MSG_ACK:                 return "ACK";
+        case MSG_ERROR:               return "ERROR";
         case MSG_UNKNOWN:             return "UNKNOWN";
         default:                      return "UNKNOWN_MESSAGE_TYPE";
     }
@@ -45,19 +45,19 @@ MessageType get_message_type(const char *type_str) {
     if (strcmp(type_str, "INVITE_RESPONSE") == 0)     return MSG_INVITE_RESPONSE;
     // Game
     if (strcmp(type_str, "GAME_START") == 0)          return MSG_GAME_START;
+    if (strcmp(type_str, "TURN") == 0)                return MSG_TURN;
     if (strcmp(type_str, "ATTACK") == 0)              return MSG_ATTACK;
     if (strcmp(type_str, "ATTACK_RESULT") == 0)       return MSG_ATTACK_RESULT;
-    if (strcmp(type_str, "TURN_OPPONENT") == 0)       return MSG_TURN_OPPONENT;
     if (strcmp(type_str, "ATTACK_INCOMING") == 0)     return MSG_ATTACK_INCOMING;
-    if (strcmp(type_str, "TURN_YOUR") == 0)           return MSG_TURN_YOUR;
     if (strcmp(type_str, "GAME_OVER") == 0)           return MSG_GAME_OVER;
     // Status and error messages
-    if (strcmp(type_str, "ERROR") == 0)               return MSG_ERROR;
     if (strcmp(type_str, "OK") == 0)                  return MSG_OK;
+    if (strcmp(type_str, "ACK") == 0)                 return MSG_ACK;
+    if (strcmp(type_str, "ERROR") == 0)               return MSG_ERROR;
     return MSG_UNKNOWN; 
 }
 
-void create_message(MyBSMessage *msg, MessageType type, const char *data) {
+void create_message(BSMessage *msg, MessageType type, const char *data) {
     msg->type = type;
     if (data) {
         strncpy(msg->data, data, MAX_DATA_SIZE - 1);
@@ -68,7 +68,7 @@ void create_message(MyBSMessage *msg, MessageType type, const char *data) {
 }
 
 // Ensures that the server can understand the message.
-void serialize_message(const MyBSMessage *msg, char *buffer) {
+void serialize_message(const BSMessage *msg, char *buffer) {
     if (strlen(msg->data) > 0) {
         snprintf(buffer, MAX_MESSAGE_SIZE, "%s|%s\n", message_type_to_str(msg->type), msg->data);
     } else {
@@ -76,9 +76,9 @@ void serialize_message(const MyBSMessage *msg, char *buffer) {
     }
 }
 
-// Split the message into its components and store them in the MyBSMessage struct
+// Split the message into its components and store them in the BSMessage struct
 // The message format is "type|data" (e.g., "LOGIN|username")
-int parse_message(const char *buffer, MyBSMessage *msg) {
+int parse_message(const char *buffer, BSMessage *msg) {
     char type_str[50], data[MAX_DATA_SIZE];
 
     if (sscanf(buffer, "%49[^|]|%199[^|]", type_str, data) != 2) {

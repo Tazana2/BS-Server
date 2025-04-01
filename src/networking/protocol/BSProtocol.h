@@ -21,24 +21,24 @@ typedef enum {
     MSG_ATTACK,
     MSG_ATTACK_RESULT,
     MSG_ATTACK_INCOMING,
-    MSG_TURN_OPPONENT,
-    MSG_TURN_YOUR,
+    MSG_TURN,
     MSG_GAME_OVER,
     // Status and error messages
     MSG_ERROR,
     MSG_OK,
+    MSG_ACK,
     MSG_UNKNOWN
 } MessageType;
 
 typedef struct {
     MessageType type;
     char data[MAX_DATA_SIZE];
-} MyBSMessage;
+} BSMessage;
 
 MessageType get_message_type(const char *type_str);
 const char *message_type_to_str(MessageType type);
-int parse_message(const char *buffer, MyBSMessage *msg);
-void create_message(MyBSMessage *msg, MessageType type, const char *data);
-void serialize_message(const MyBSMessage *msg, char *buffer);
+int parse_message(const char *buffer, BSMessage *msg);
+void create_message(BSMessage *msg, MessageType type, const char *data);
+void serialize_message(const BSMessage *msg, char *buffer);
 
 #endif
