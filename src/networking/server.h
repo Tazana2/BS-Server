@@ -26,5 +26,6 @@ Server *create_server(int port);
 void run_server(Server *server);
 void stop_server(Server *server);
 void accept_new_client(Server *server);
+void process_message(Server *server, int client_index, const char *buffer);
 
 #endif // SERVER_H

@@ -131,14 +131,14 @@ void accept_new_client(Server *server) {
 }
 
 void process_message(Server *server, int client_index, const char *buffer) {
-    MyBSMessage msg;
+    BSMessage msg;
     if (parse_message(buffer, &msg) == -1) {
         printf("ERROR: Couldn't parse the message.\n");
         return;
     }
     
     char response_buffer[BUFFER_SIZE];
-    MyBSMessage response;
+    BSMessage response;
     msg.data[strcspn(msg.data, "\n")] = 0; // If the message has a newline, remove it
     
     switch (msg.type) {
@@ -190,7 +190,7 @@ void process_message(Server *server, int client_index, const char *buffer) {
             create_message(&response, MSG_OK, "Invitation sent.");
             
             // Notify the target player
-            MyBSMessage invite_notification;
+            BSMessage invite_notification;
             create_message(&invite_notification, MSG_INVITE_FROM, sender_player->username);
             char invite_buffer[BUFFER_SIZE];
             serialize_message(&invite_notification, invite_buffer);
@@ -213,7 +213,7 @@ void process_message(Server *server, int client_index, const char *buffer) {
             create_message(&response, MSG_OK, "Response sent.");
             
             // Notify the target player
-            MyBSMessage invite_notification;
+            BSMessage invite_notification;
             char invite_buffer[BUFFER_SIZE];
             snprintf(invite_buffer, sizeof(invite_buffer), "%s %s", sender_player->username, invite_status);
             
@@ -238,7 +238,7 @@ void process_message(Server *server, int client_index, const char *buffer) {
         serialize_message(&response, response_buffer);
         send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
         // Reset the response message to avoid sending old data
-        memset(&response, 0, sizeof(MyBSMessage));
+        memset(&response, 0, sizeof(BSMessage));
         memset(response_buffer, 0, sizeof(response_buffer));
     }
 }
