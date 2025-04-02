@@ -1,13 +1,42 @@
+# Compilador y flags
 CC = gcc
-CFLAGS = -Wall -Wextra -Igame_models -Inetworking/protocol -lpthread
-SRC = networking/server.c networking/protocol/BSProtocol.c game_models/player.c game_models/player_table.c game_models/invitation_table.c 
-OBJ = $(SRC:.c=.o)
-EXEC = server
+CFLAGS = -Wall -Wextra -Werror -g
 
-all: $(EXEC)
+# Directorios
+GAME_LOGIC_DIR = game_logic
+GAME_MODELS_DIR = game_models
+NETWORKING_DIR = networking
+PROTOCOL_DIR = $(NETWORKING_DIR)/protocol
 
-$(EXEC): $(OBJ)
-	$(CC) $(CFLAGS) -o $(EXEC) $(OBJ)
+# Archivos fuente
+SRCS = $(GAME_LOGIC_DIR)/board.c \
+       $(GAME_LOGIC_DIR)/game_session.c \
+       $(GAME_MODELS_DIR)/player_table.c \
+       $(GAME_MODELS_DIR)/invitation_table.c \
+       $(GAME_MODELS_DIR)/player.c \
+       $(PROTOCOL_DIR)/BSProtocol.c \
+       $(NETWORKING_DIR)/server.c 
 
+# Archivos objeto
+OBJS = $(SRCS:.c=.o)
+
+# Ejecutable
+TARGET = server
+
+# Regla principal
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
+
+# Regla para compilar archivos .c a .o
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Limpieza
 clean:
-	rm -f $(OBJ) $(EXEC)
+	rm -f $(OBJS) $(TARGET)
+
+# Limpieza profunda
+mrproper: clean
+	rm -f *~
