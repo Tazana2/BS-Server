@@ -22,6 +22,6 @@ int find_invitation(InvitationTable *table, const char *sender, const char *rece
 void add_invitation(InvitationTable *table, const char *sender, const char *receiver);
 void remove_invitation(InvitationTable *table, const char *sender, const char *receiver);
 void destroy_invitation_table(InvitationTable *table);
-void print_invitations(InvitationTable *table);
+void print_invitations(InvitationTable *table); // For debugging purposes
 
 #endif // INVITATION_TABLE_H

@@ -1,4 +1,5 @@
 #include "server.h"
+#include "../game_logic/game_session.h"
 
 Server *create_server(int port) {
     Server *server = (Server *)malloc(sizeof(Server));
@@ -9,8 +10,9 @@ Server *create_server(int port) {
     
     server->player_table = create_player_table();
     server->invitation_table = create_invitation_table();
-    if (!server->player_table || !server->invitation_table) {
-        perror("ERROR: Something went wrong with player table or invitation table.");
+    server->game_session_table = create_game_session_table();
+    if (!server->player_table || !server->invitation_table || !server->game_session_table) {
+        perror("ERROR: Something went wrong with player, game or invitation table.");
         free(server);
         return NULL;
     }
@@ -19,6 +21,8 @@ Server *create_server(int port) {
     if (server->server_fd == -1) {
         perror("ERROR: Something went wrong with socket.");
         destroy_player_table(server->player_table);
+        destroy_invitation_table(server->invitation_table);
+        destroy_game_session_table(server->game_session_table);
         free(server);
         return NULL;
     }
@@ -34,6 +38,7 @@ Server *create_server(int port) {
         close(server->server_fd);
         destroy_player_table(server->player_table);
         destroy_invitation_table(server->invitation_table);
+        destroy_game_session_table(server->game_session_table);
         free(server);
         return NULL;
     }
@@ -43,6 +48,7 @@ Server *create_server(int port) {
         close(server->server_fd);
         destroy_player_table(server->player_table);
         destroy_invitation_table(server->invitation_table);
+        destroy_game_session_table(server->game_session_table);
         free(server);
         return NULL;
     }
@@ -80,7 +86,9 @@ void run_server(Server *server) {
                 if (bytes_received <= 0) {
                     printf("Client disconnected.\n");
                     Player *player = get_player_by_socket(server->player_table, server->clients[i].fd);
-                    remove_player(server->player_table, player->username, server->clients[i].fd);
+                    if (player) {
+                        remove_player(server->player_table, player->username, server->clients[i].fd);
+                    }
                     close(server->clients[i].fd);
                     server->clients[i].fd = -1;
                 } else {
@@ -142,8 +150,7 @@ void process_message(Server *server, int client_index, const char *buffer) {
     msg.data[strcspn(msg.data, "\n")] = 0; // If the message has a newline, remove it
     
     switch (msg.type) {
-        case MSG_LOGIN:
-            printf("Login try with username: %s\n", msg.data);
+        case MSG_LOGIN: {
             Player *check = add_player(server->player_table, msg.data, server->clients[client_index].fd);
             if (!check) {
                 create_message(&response, MSG_ERROR, "Couldn't add player.");
@@ -151,26 +158,41 @@ void process_message(Server *server, int client_index, const char *buffer) {
             }
             printf("User (%s) connected on socket: %d\n", check->username, check->socket_fd);
             create_message(&response, MSG_OK, "Welcome.");
+            // Notify all other players about the new player
+            BSMessage user_list_msg;
+            create_message(&user_list_msg, MSG_USER_CONNECT, msg.data);
+            char user_list_buffer[BUFFER_SIZE];
+            serialize_message(&user_list_msg, user_list_buffer);
+            broadcast_message(server, user_list_buffer, client_index);
             break;
-        case MSG_LOGOUT:
-            printf("User (%s) is trying to logout.\n", msg.data);
+        }
+        case MSG_LOGOUT: {
             if (remove_player(server->player_table, msg.data, server->clients[client_index].fd)) {
                 create_message(&response, MSG_OK, "Session closed. Bye!");
                 printf("User (%s) disconnected.\n", msg.data);
+                // Notify all other players about the disconnection
+                BSMessage logout_msg;
+                create_message(&logout_msg, MSG_USER_DISCONNECT, msg.data);
+                char logout_buffer[BUFFER_SIZE];
+                serialize_message(&logout_msg, logout_buffer);
+                broadcast_message(server, logout_buffer, client_index);
             } else {
                 printf("ERROR: Couldn't disconnect (%s).\n", msg.data);
                 create_message(&response, MSG_ERROR, "Couldn't disconnect.");
             }
             break;
-        case MSG_USER_LIST:
+        }
+        case MSG_USER_LIST: {
             char user_list[BUFFER_SIZE];
             get_user_list(server->player_table, user_list);
             create_message(&response, MSG_OK, user_list);
             break;
-        case MSG_ATTACK:
+        }
+        case MSG_ATTACK: {
             printf("Attack command from (%s).\n", msg.data);
             create_message(&response, MSG_ATTACK_RESULT, "For the moment, this is a placeholder for the attack result.");
             break;
+        }
         case MSG_INVITE: {
             Player *sender_player = get_player_by_socket(server->player_table, server->clients[client_index].fd);
             char receiver[50];
@@ -185,10 +207,8 @@ void process_message(Server *server, int client_index, const char *buffer) {
                 break;
             }
             add_invitation(server->invitation_table, sender_player->username, target_player->username);
-            
             // Server response to the sender
             create_message(&response, MSG_OK, "Invitation sent.");
-            
             // Notify the target player
             BSMessage invite_notification;
             create_message(&invite_notification, MSG_INVITE_FROM, sender_player->username);
@@ -196,9 +216,12 @@ void process_message(Server *server, int client_index, const char *buffer) {
             serialize_message(&invite_notification, invite_buffer);
             send(target_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
             printf("(%s) just invited (%s) to a game.\n", sender_player->username, receiver);
+            // print_invitations(server->invitation_table); // For debugging purposes
             break;
         }
         case MSG_INVITE_ACK: {
+            BSMessage invite_notification;
+            char invite_buffer[BUFFER_SIZE];
             char receiver[50], invite_status[10];
             sscanf(msg.data, "%s %s", receiver, invite_status);
             // Verify if the invitation exists
@@ -208,19 +231,49 @@ void process_message(Server *server, int client_index, const char *buffer) {
                 create_message(&response, MSG_ERROR, "You have no invitation from this user.");
                 break;
             }
-            
+            // If the invitation exists and the status is valid
+            if (strcmp(invite_status, "accept") == 0 && sender_player->in_game == 0 && target_player->in_game == 0) {
+                // Create a game session
+                add_game_session(server->game_session_table, sender_player, target_player);
+                snprintf(invite_buffer, sizeof(invite_buffer), "%s %s", sender_player->username, invite_status);
+                // First notification INVITE_RESPONSE -> target player
+                create_message(&invite_notification, MSG_INVITE_RESPONSE, invite_buffer);
+                serialize_message(&invite_notification, invite_buffer);
+                send(target_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
+                // Second notification GAME_START -> target player
+                create_message(&invite_notification, MSG_GAME_START, NULL);
+                serialize_message(&invite_notification, invite_buffer);
+                send(target_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
+                // First notification OK -> sender player
+                create_message(&invite_notification, MSG_OK, "Response sent.");
+                serialize_message(&invite_notification, invite_buffer);
+                send(sender_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
+                // Notify the player that has the turn
+                game_session_t *session = find_game_session(server->game_session_table, sender_player, target_player);
+                if (session) {
+                    if (session->current_turn == 1) {
+                        create_message(&invite_notification, MSG_TURN, sender_player->username);
+                    } else {
+                        create_message(&invite_notification, MSG_TURN, target_player->username);
+                    }
+                    serialize_message(&invite_notification, invite_buffer);
+                    send(sender_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
+                    send(target_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
+                }
+            } else if (strcmp(invite_status, "reject") == 0) {
+                snprintf(invite_buffer, sizeof(invite_buffer), "%s %s", sender_player->username, invite_status);
+                create_message(&invite_notification, MSG_INVITE_RESPONSE, invite_buffer);
+            } else {
+                create_message(&response, MSG_ERROR, "Invalid response format or one player is already in game.");
+                break;
+            }
             // Server response to the sender
-            create_message(&response, MSG_OK, "Response sent.");
-            
-            // Notify the target player
-            BSMessage invite_notification;
-            char invite_buffer[BUFFER_SIZE];
-            snprintf(invite_buffer, sizeof(invite_buffer), "%s %s", sender_player->username, invite_status);
-            
-            create_message(&invite_notification, MSG_INVITE_RESPONSE, invite_buffer);
-            serialize_message(&invite_notification, invite_buffer);
-            send(target_player->socket_fd, invite_buffer, strlen(invite_buffer), 0);
+            create_message(&response, MSG_GAME_START, NULL);
+
             printf("(%s) responded the invitation of (%s).\n", sender_player->username, receiver);
+            remove_invitation(server->invitation_table, target_player->username, sender_player->username);
+            // print_invitations(server->invitation_table); // For debugging purposes
+            print_game_sessions(server->game_session_table); // For debugging purposes
             break;
         }            
         default:
@@ -240,6 +293,14 @@ void process_message(Server *server, int client_index, const char *buffer) {
         // Reset the response message to avoid sending old data
         memset(&response, 0, sizeof(BSMessage));
         memset(response_buffer, 0, sizeof(response_buffer));
+    }
+}
+
+void broadcast_message(Server *server, const char *message, int client_index) {
+    for (int i = 1; i < MAX_CLIENTS; i++) {
+        if (server->clients[i].fd != -1 && server->clients[i].fd != server->clients[client_index].fd) {
+            send(server->clients[i].fd, message, strlen(message), 0);
+        }
     }
 }
 

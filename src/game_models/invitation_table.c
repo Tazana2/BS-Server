@@ -2,9 +2,10 @@
 
 InvitationTable *create_invitation_table() {
     InvitationTable *table = (InvitationTable *)malloc(sizeof(InvitationTable));
-    if (table) {
-        table->head = NULL;
+    if (!table) {
+        return NULL;
     }
+    table->head = NULL;
     return table;
 }
 
@@ -67,7 +68,7 @@ void print_invitations(InvitationTable *table) {
     if (!table) return;
     Invitation *current = table->head;
     while (current) {
-        printf("%s invited %s\n", current->sender, current->receiver);
+        printf("- (%s) invited (%s)\n", current->sender, current->receiver);
         current = current->next;
     }
 }
