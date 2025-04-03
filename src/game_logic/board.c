@@ -7,20 +7,23 @@ void initialize_board(board_t *board) {
     board->sunk_count = 0;
 
     // Placing ship in a predefined location for simplicity
-    board->grid[1][1] = 'S'; board->grid[1][2] = 'S'; board->grid[1][3] = 'S'; // Ship 1
-    board->grid[3][5] = 'S'; board->grid[4][5] = 'S'; // Ship 2
-    board->grid[6][2] = 'S'; // Ship 3
+    board->ships[0] = (Ship){1, 1, 1, 3, 0, 3}; 
+    board->ships[1] = (Ship){3, 5, 4, 5, 0, 2}; 
+    board->ships[2] = (Ship){6, 2, 6, 2, 0, 1}; 
 
-    // This would be the representation of the ships on the board:
-    // ~ ~ ~ ~ ~ ~ ~
-    // ~ S S S ~ ~ ~
-    // ~ ~ ~ ~ S ~ ~
-    // ~ ~ ~ ~ S ~ ~
-    // ~ ~ ~ ~ ~ ~ ~
-    // ~ ~ S ~ ~ ~ ~
-    // ~ ~ ~ ~ ~ ~ ~
-    // ~ ~ ~ ~ ~ ~ ~
-    // The rest of the grid is filled with water ('~')
+    // Ships are placed, checking if they are vertical or horizontal
+    for (int i = 0; i < board->ship_count; i++) {
+        Ship ship = board->ships[i];
+        if (ship.x_start == ship.x_end) {
+            for (int y = ship.y_start; y <= ship.y_end;y++) {
+                board->grid[ship.x_start][y] = 'S';
+            }
+        } else {
+            for (int x = ship.x_start; x<= ship.x_end; x++) {
+                board->grid[x][ship.y_start] = 'S';
+            }
+        }
+    }
 }
 
 attack_result_t attack(board_t *board, int x, int y) {
@@ -29,29 +32,29 @@ attack_result_t attack(board_t *board, int x, int y) {
     }
 
     if (board->grid[x][y] == 'S') {
-        board->grid[x][y] = 'X'; // Mark as hit
-        int sunk = 1;
+        board->grid[x][y] = 'X';
+        
+        // Look for the ship hit
+        for (int i = 0; i < board->ship_count; i++) { 
+            Ship *ship = &board->ships[i];
 
-        // Check if the ship is sunk
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
-                if (board->grid[i][j] == 'S') {
-                    sunk = 0; // Ship still exists
-                    break;
+            if (ship->x_start == ship->x_end) { // Horizontal
+                if (x == ship->x_start && y >= ship->y_start && y <= ship->y_end) {
+                    ship->hits++;
+                }
+            } else { // Vertical
+                if (y == ship->y_start && x >= ship->x_start && x <= ship->x_end) {
+                    ship->hits++;
                 }
             }
-            if (!sunk) break;
-        }
 
-        if (sunk) {
-            board->sunk_count++;
-            return SINK; // Ship sunk
+            if (ship->hits == ship->size) {
+                board->sunk_count++;
+                return SINK;
+            }
         }
-        return HIT; // Ship hit but not sunk
-    } else if (board->grid[x][y] == '~') {
-        // board->grid[x][y] = 'O'; // Mark as miss
-        return MISS; // Missed
+        return HIT;
+    } else {
+        return MISS;
     }
-
-    return MISS; // Already attacked this location
 }
