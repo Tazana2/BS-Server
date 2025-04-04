@@ -46,13 +46,15 @@ attack_result_t process_attack(game_session_t *session, int x, int y) {
     return result;
 }
 
-void add_game_session(GameSessionTable *table, Player *player1, Player *player2) {
-    if (!table) return;
+game_session_t *add_game_session(GameSessionTable *table, Player *player1, Player *player2) {
+    if (!table) return NULL;
     game_session_t *new_session = (game_session_t *)malloc(sizeof(game_session_t));
-    if (!new_session) return;
+    if (!new_session) return NULL;
 
     new_session->player1 = player1;
     new_session->player2 = player2;
+    new_session->player1->in_game = 1;
+    new_session->player2->in_game = 1;
 
     initialize_board(&new_session->player1_board);
     initialize_board(&new_session->player2_board);
@@ -62,6 +64,7 @@ void add_game_session(GameSessionTable *table, Player *player1, Player *player2)
     new_session->stage = ATTACKING; // Assuming the game starts in the attacking stage for testing purposes
     new_session->next = table->head;
     table->head = new_session;
+    return new_session;
 }
 
 void remove_game_session(GameSessionTable *table, Player *player1, Player *player2) {

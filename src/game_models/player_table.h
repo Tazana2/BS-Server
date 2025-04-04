@@ -20,7 +20,7 @@ PlayerTable *create_player_table();
 Player *add_player(PlayerTable *table, const char *username, int socket_fd);
 Player *get_player(PlayerTable *table, const char *username);
 Player *get_player_by_socket(PlayerTable *table, int socket_fd);
-int remove_player(PlayerTable *table, const char *username, const int socket_fd);
+int remove_player(PlayerTable *table, const int socket_fd);
 void get_user_list(PlayerTable *table, char *user_list);
 void destroy_player_table(PlayerTable *table);
 

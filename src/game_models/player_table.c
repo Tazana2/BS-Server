@@ -26,6 +26,7 @@ Player *add_player(PlayerTable *table, const char *username, int socket_fd) {
     // Check if the player already exists
     PlayerNode *node = table->table[index];
     while (node) {
+        // printf("player soc: %d soc: %d\n",node->player->socket_fd, socket_fd); // Debugging line
         if (strcmp(node->player->username, username) == 0) {
             // The player already exists, return NULL
             return NULL;
@@ -74,20 +75,22 @@ Player *get_player_by_socket(PlayerTable *table, int socket_fd) {
     return NULL;
 }
 
-int remove_player(PlayerTable *table, const char *username, const int socket_fd) {
+int remove_player(PlayerTable *table, const int socket_fd) {
     if (!table) return 0;
-    
-    unsigned int index = hash_function(username);
+    Player *player = get_player_by_socket(table, socket_fd);
+    if (!player) return 0; // Player not found
+    unsigned int index = hash_function(player->username);
     PlayerNode *node = table->table[index];
     PlayerNode *prev = NULL;
     
     while (node) {
-        if (strcmp(node->player->username, username) == 0 && node->player->socket_fd == socket_fd) {
+        if (strcmp(node->player->username, player->username) == 0 && node->player->socket_fd == socket_fd) {
             if (prev) {
                 prev->next = node->next;
             } else {
                 table->table[index] = node->next;
             }
+            printf("User (%s) disconnected.\n", node->player->username);
             destroy_player(node->player);
             free(node);
             return 1; // Player removed
@@ -106,6 +109,8 @@ void get_user_list(PlayerTable *table, char *user_list) {
         PlayerNode *node = table->table[i];
         while (node) {
             strcat(user_list, node->player->username);
+            strcat(user_list, ":");
+            strcat(user_list, node->player->in_game ? "In Game" : "Available");
             strcat(user_list, " ");
             node = node->next;
         }

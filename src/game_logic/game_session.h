@@ -33,8 +33,8 @@ typedef struct {
 
 GameSessionTable *create_game_session_table();
 game_session_t *find_game_session(GameSessionTable *table, Player *player1, Player *player2);
+game_session_t *add_game_session(GameSessionTable *table, Player *player1, Player *player2);
 attack_result_t process_attack(game_session_t *session, int x, int y);
-void add_game_session(GameSessionTable *table, Player *player1, Player *player2);
 void remove_game_session(GameSessionTable *table, Player *player1, Player *player2);
 void destroy_game_session_table(GameSessionTable *table);
 void print_game_sessions(GameSessionTable *table); // For debugging purposes
