@@ -2,7 +2,7 @@
 #define BOARD_H
 
 #define BOARD_SIZE 10
-#define MAX_SHIPS 9
+#define NUM_SHIPS 9
 
 typedef enum {
     HIT,
@@ -19,12 +19,13 @@ typedef struct {
 
 typedef struct {
     char grid[BOARD_SIZE][BOARD_SIZE]; // 10X10 grid for the board
-    Ship ships[MAX_SHIPS];
+    Ship ships[NUM_SHIPS];
     int ship_count;    // Number of ships on the board
     int sunk_count;    // Number of ships sunk
 } board_t;
 
 void initialize_board(board_t *board);
+int is_valid_position(board_t *board, int x_start, int y_start, int x_end, int y_end);
 attack_result_t attack(board_t *board, int x, int y);
 int is_ship_sunk(board_t *board, int ship_index);
 
