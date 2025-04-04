@@ -15,7 +15,8 @@ SRCS = $(GAME_LOGIC_DIR)/board.c \
        $(GAME_MODELS_DIR)/invitation_table.c \
        $(GAME_MODELS_DIR)/player.c \
        $(PROTOCOL_DIR)/BSProtocol.c \
-       $(NETWORKING_DIR)/server.c 
+       $(NETWORKING_DIR)/server.c \
+       $(NETWORKING_DIR)/request_handler.c \
 
 # Archivos objeto
 OBJS = $(SRCS:.c=.o)
