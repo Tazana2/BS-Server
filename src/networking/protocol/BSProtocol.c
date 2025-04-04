@@ -76,18 +76,24 @@ void serialize_message(const BSMessage *msg, char *buffer) {
 // The message format is "type|data" (e.g., "LOGIN|username")
 int parse_message(BSMessage *msg, const char *buffer) {
     char header[50], data[MAX_DATA_SIZE];
+    const char *EOF_MARKER = "<EOF>";
+    size_t eof_len = strlen(EOF_MARKER);
 
     if (sscanf(buffer, "%49[^|]|%199[^|]", header, data) != 2) {
         return -1;
     }
-
+    data[strcspn(data, "\n")] = 0; // Remove newline character if present
     msg->header = get_message_type(header);
-
-    if (msg->header != MSG_UNKNOWN && strlen(data) > 0) {
-        strncpy(msg->data, data, MAX_DATA_SIZE - 1);
-        msg->data[MAX_DATA_SIZE - 1] = '\0';
+    
+    size_t data_len = strlen(data);
+    if (msg->header != MSG_UNKNOWN && data_len >= eof_len &&
+        strcmp(data + data_len - eof_len, EOF_MARKER) == 0) {
+            // Elimina el <EOF> del final
+            data[data_len - eof_len] = '\0';
+            
+            strncpy(msg->data, data, MAX_DATA_SIZE - 1);
     } else {
-        msg->data[0] = '\0';
+        return -1;  // Error: no tiene <EOF> o tipo desconocido
     }
 
     return 0;
