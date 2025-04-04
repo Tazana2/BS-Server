@@ -8,8 +8,6 @@ const char *message_type_to_str(MessageType header) {
         case MSG_LOGIN:               return "LOGIN";
         case MSG_LOGOUT:              return "LOGOUT";
         case MSG_USER_LIST:           return "USER_LIST";
-        case MSG_USER_CONNECT:        return "USER_CONNECT";
-        case MSG_USER_DISCONNECT:     return "USER_DISCONNECT";
         // Invitation
         case MSG_INVITE_SEND:         return "INVITE_SEND";
         case MSG_INVITE_RECEIVE:      return "INVITE_RECEIVE";
@@ -36,8 +34,6 @@ MessageType get_message_type(const char *header) {
     if (strcmp(header, "LOGIN") == 0)               return MSG_LOGIN;
     if (strcmp(header, "LOGOUT") == 0)              return MSG_LOGOUT;
     if (strcmp(header, "USER_LIST") == 0)           return MSG_USER_LIST;
-    if (strcmp(header, "USER_CONNECT") == 0)        return MSG_USER_CONNECT;
-    if (strcmp(header, "USER_DISCONNECT") == 0)     return MSG_USER_DISCONNECT;
     // Invitation
     if (strcmp(header, "INVITE_SEND") == 0)         return MSG_INVITE_SEND;
     if (strcmp(header, "INVITE_RECEIVE") == 0)      return MSG_INVITE_RECEIVE;
@@ -70,9 +66,9 @@ void create_message(BSMessage *msg, MessageType type, const char *data) {
 // Ensures that the server can understand the message.
 void serialize_message(const BSMessage *msg, char *buffer) {
     if (strlen(msg->data) > 0) {
-        snprintf(buffer, MAX_MESSAGE_SIZE, "%s|%s\n", message_type_to_str(msg->header), msg->data);
+        snprintf(buffer, MAX_MESSAGE_SIZE, "%s|%s<EOF>\n", message_type_to_str(msg->header), msg->data);
     } else {
-        snprintf(buffer, MAX_MESSAGE_SIZE, "%s\n", message_type_to_str(msg->header));
+        snprintf(buffer, MAX_MESSAGE_SIZE, "%s|<EOF>\n", message_type_to_str(msg->header));
     }
 }
 

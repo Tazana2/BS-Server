@@ -9,8 +9,6 @@ typedef enum {
     MSG_LOGIN,
     MSG_LOGOUT,
     MSG_USER_LIST,
-    MSG_USER_CONNECT,
-    MSG_USER_DISCONNECT,
     // Invitation
     MSG_INVITE_SEND,
     MSG_INVITE_RECEIVE,
