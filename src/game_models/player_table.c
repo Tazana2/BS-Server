@@ -110,7 +110,7 @@ void get_user_list(PlayerTable *table, char *user_list) {
         while (node) {
             strcat(user_list, node->player->username);
             strcat(user_list, ":");
-            strcat(user_list, node->player->in_game ? "In Game" : "Available");
+            strcat(user_list, node->player->in_game ? "In_Game" : "Available");
             strcat(user_list, " ");
             node = node->next;
         }

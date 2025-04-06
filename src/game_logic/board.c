@@ -1,12 +1,10 @@
 #include "board.h"
-#include <string.h>
-#include <time.h>
-#include <stdlib.h>
 
 void initialize_board(board_t *board) {
     memset(board->grid, '~', sizeof(board->grid)); // Fill the grid with water
-    const int ship_sizes[NUM_SHIPS] = {5, 4, 3, 3, 2, 2, 1, 1, 1}; // The 9 ships that are requiered
-    board->ship_count = NUM_SHIPS; // Example: 3 ships
+    // const int ship_sizes[NUM_SHIPS] = {5, 4, 3, 3, 2, 2, 1, 1, 1}; // The 9 ships that are requiered
+    const int ship_sizes[NUM_SHIPS] = {1}; // Debugging purposes
+    board->ship_count = NUM_SHIPS;
     board->sunk_count = 0;
 
     srand(time(NULL));
@@ -38,6 +36,14 @@ void initialize_board(board_t *board) {
         }
         placed_ships++;
     }
+    // Print the board for debugging
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 10; j++) {
+            printf("%c ", board->grid[i][j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
 
 int is_valid_position(board_t *board, int x_start, int y_start, int x_end, int y_end) {

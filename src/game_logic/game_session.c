@@ -9,12 +9,11 @@ GameSessionTable *create_game_session_table() {
     return table;
 }
 
-game_session_t *find_game_session(GameSessionTable *table, Player *player1, Player *player2) {
+game_session_t *find_game_session(GameSessionTable *table, Player *player) {
     if (!table) return NULL;
     game_session_t *current = table->head;
     while (current) {
-        if ((strcmp(current->player1->username, player1->username) == 0 && strcmp(current->player2->username, player2->username) == 0) ||
-            (strcmp(current->player1->username, player2->username) == 0 && strcmp(current->player2->username, player1->username) == 0)) {
+        if (strcmp(current->player1->username, player->username) == 0 || strcmp(current->player2->username, player->username) == 0) {
             return current;
         }
         current = current->next;
@@ -56,7 +55,9 @@ game_session_t *add_game_session(GameSessionTable *table, Player *player1, Playe
     new_session->player1->in_game = 1;
     new_session->player2->in_game = 1;
 
+    printf("Player 1 board:\n");
     initialize_board(&new_session->player1_board);
+    printf("Player 2 board:\n");
     initialize_board(&new_session->player2_board);
     
     new_session->current_turn = 0; // 0 for player1, 1 for player2
@@ -67,12 +68,26 @@ game_session_t *add_game_session(GameSessionTable *table, Player *player1, Playe
     return new_session;
 }
 
-void remove_game_session(GameSessionTable *table, Player *player1, Player *player2) {
+const char *attack_result_to_str(attack_result_t result) {
+    switch (result) {
+        case HIT:
+            return "HIT";
+        case MISS:
+            return "MISS";
+        case SINK:
+            return "SINK";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+void remove_game_session(GameSessionTable *table, Player *player) {
     if (!table) return;
     game_session_t *current = table->head, *prev = NULL;
     while (current) {
-        if ((strcmp(current->player1->username, player1->username) == 0 && strcmp(current->player2->username, player2->username) == 0) ||
-            (strcmp(current->player1->username, player2->username) == 0 && strcmp(current->player2->username, player1->username) == 0)) {
+        if (strcmp(current->player1->username, player->username) == 0 || strcmp(current->player2->username, player->username) == 0) {
+            current->player1->in_game = 0;
+            current->player2->in_game = 0;
             if (prev) {
                 prev->next = current->next;
             } else {
@@ -100,11 +115,16 @@ void destroy_game_session_table(GameSessionTable *table) {
 void print_game_sessions(GameSessionTable *table) {
     if (!table) return;
     game_session_t *current = table->head;
+    if (!current) {
+        printf("No active game sessions.\n");
+        return;
+    }
+    printf("Active Game Sessions:\n");
     while (current) {
         printf("- Game Session: %s vs %s\n", current->player1->username, current->player2->username);
-        printf("    Current Turn: Player %d\n", current->current_turn + 1);
+        printf("    Current Turn: %s\n", current->current_turn == 0 ? current->player1->username : current->player2->username);
         printf("    Stage: %d\n", current->stage);
-        printf("    Winner: %d\n", current->winner);
+        printf("    Winner: %s\n", current->winner == 0 ? current->player1->username : (current->winner == 1 ? current->player2->username : "None"));
         current = current->next;
     }
 }

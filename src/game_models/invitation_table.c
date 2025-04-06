@@ -67,6 +67,11 @@ void destroy_invitation_table(InvitationTable *table) {
 void print_invitations(InvitationTable *table) {
     if (!table) return;
     Invitation *current = table->head;
+    if (!current) {
+        printf("No invitations.\n");
+        return;
+    }
+    printf("Active Invitations:\n");
     while (current) {
         printf("- (%s) invited (%s)\n", current->sender, current->receiver);
         current = current->next;
