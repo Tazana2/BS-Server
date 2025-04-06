@@ -90,13 +90,29 @@ void run_server(Server *server) {
                     Player *player = get_player_by_socket(server->player_table, server->clients[i].fd);
                     if (player) {
                         remove_player(server->player_table, server->clients[i].fd);
+                        game_session_t *session = find_game_session(server->game_session_table, player);
+                        if (session) {
+                            BSMessage game_over;
+                            char game_over_buffer[BUFFER_SIZE];
+                            snprintf(game_over_buffer, BUFFER_SIZE, "%s", strcmp(session->player1->username, player->username) == 0 ? session->player2->username : session->player1->username);
+                            create_message(&game_over, MSG_GAME_OVER, game_over_buffer);
+                            serialize_message(&game_over, game_over_buffer);
+                            if (strcmp(session->player1->username, player->username) == 0) {
+                                send(session->player2->socket_fd, game_over_buffer, strlen(game_over_buffer), 0);
+                            } else {
+                                send(session->player1->socket_fd, game_over_buffer, strlen(game_over_buffer), 0);
+                            }
+                            remove_game_session(server->game_session_table, player);
+                        }
                     }
+                    printf("Client disconnected on socket descriptor: %d.\n", server->clients[i].fd);
                     close(server->clients[i].fd);
                     server->clients[i].fd = -1;
-                    printf("Client disconnected.\n");
                 } else {
                     buffer[bytes_received] = '\0';
                     process_message(server, i, buffer);
+                    print_game_sessions(server->game_session_table);
+                    print_invitations(server->invitation_table);
                 }
             }
         }
@@ -132,7 +148,7 @@ void accept_new_client(Server *server) {
     for (int i = 0; i < MAX_CLIENTS; i++) {
         if (server->clients[i].fd == -1) {
             server->clients[i].fd = new_socket;
-            printf("New connection on socket: %d.\n", new_socket);
+            printf("New connection on socket descriptor: %d.\n", new_socket);
             return;
         }
     }
