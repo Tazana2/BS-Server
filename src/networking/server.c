@@ -1,5 +1,4 @@
 #include "server.h"
-#include "../game_logic/game_session.h"
 
 Server *create_server(int port) {
     Server *server = (Server *)malloc(sizeof(Server));
@@ -184,10 +183,6 @@ void process_message(Server *server, int client_index, const char *buffer) {
             process_request_user_list(server, client_index);
             break;
         }
-        case MSG_ATTACK: {
-            process_request_attack(server, client_index, &request);
-            break;
-        }
         case MSG_INVITE_SEND: {
             process_request_invite_send(server, client_index, &request);
             break;
@@ -195,7 +190,15 @@ void process_message(Server *server, int client_index, const char *buffer) {
         case MSG_INVITE_REPLY: {
             process_request_invite_reply(server, client_index, &request);
             break;
-        }            
+        }
+        case MSG_ATTACK: {
+            process_request_attack(server, client_index, &request);
+            break;
+        }
+        case MSG_PLACE_SHIPS: {
+            process_request_place_ships(server, client_index);
+            break;
+        }
         default:
             printf("Unknown message: %s\n", request.data);
             create_message(&response, MSG_ERROR, "Unknown command.");

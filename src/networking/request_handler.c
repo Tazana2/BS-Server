@@ -79,62 +79,6 @@ int process_request_user_list(Server *server, int client_index) {
     return 0;
 }
 
-int process_request_attack(Server *server, int client_index, BSMessage *request) {
-    BSMessage response;
-    char response_buffer[BUFFER_SIZE];
-    Player *existing_player = get_player_by_socket(server->player_table, server->clients[client_index].fd);
-    if (!existing_player) {
-        create_message(&response, MSG_ERROR, "You are not logged in.");
-        serialize_message(&response, response_buffer);
-        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
-        return -1;
-    } else {
-        game_session_t *session = find_game_session(server->game_session_table, existing_player);
-        // Check if the player is in a game session
-        if (!session) {
-            create_message(&response, MSG_ERROR, "You are not in a game.");
-            serialize_message(&response, response_buffer);
-            send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
-            return -1;
-        }
-        // Check if it's the player's turn
-        if (strcmp(existing_player->username, session->current_turn == 0 ? session->player1->username : session->player2->username) != 0) {
-            create_message(&response, MSG_ERROR, "It's not your turn.");
-            serialize_message(&response, response_buffer);
-            send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
-            return -1;
-        }
-        int x, y;
-        sscanf(request->data, "%d %d", &x, &y);
-        attack_result_t result = process_attack(session, x, y);
-        create_message(&response, MSG_ATTACK_RESULT, attack_result_to_str(result));
-        serialize_message(&response, response_buffer);
-        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
-        // Check if the game is over
-        if (session->winner != -1) {
-            char game_over_buffer[BUFFER_SIZE];
-            snprintf(game_over_buffer, BUFFER_SIZE, "%s", session->winner == 0 ? session->player1->username : session->player2->username);
-            print_game_sessions(server->game_session_table);
-            create_message(&response, MSG_GAME_OVER, game_over_buffer);
-            serialize_message(&response, response_buffer);
-            send(session->player1->socket_fd, response_buffer, strlen(response_buffer), 0);
-            send(session->player2->socket_fd, response_buffer, strlen(response_buffer), 0);
-            remove_game_session(server->game_session_table, existing_player);
-            return 0;
-        } else {
-            // Notify the player that has the turn
-            BSMessage turn_notification;
-            char turn_buffer[BUFFER_SIZE];
-            snprintf(turn_buffer, BUFFER_SIZE, "%s", session->current_turn == 0 ? session->player1->username : session->player2->username);
-            create_message(&turn_notification, MSG_TURN, turn_buffer);
-            serialize_message(&turn_notification, turn_buffer);
-            send(session->player1->socket_fd, turn_buffer, strlen(turn_buffer), 0);
-            send(session->player2->socket_fd, turn_buffer, strlen(turn_buffer), 0);
-            return 0;
-        }
-    }
-}
-
 int process_request_invite_send(Server *server, int client_index, BSMessage *request) {
     BSMessage response;
     char response_buffer[BUFFER_SIZE];
@@ -170,7 +114,6 @@ int process_request_invite_send(Server *server, int client_index, BSMessage *req
         send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
         return -1;
     }
-
     add_invitation(server->invitation_table, sender_player->username, target_player->username);
     create_message(&response, MSG_OK, "Invitation sent.");
     serialize_message(&response, response_buffer);
@@ -209,7 +152,6 @@ int process_request_invite_reply(Server *server, int client_index, BSMessage *re
         send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
         return -1;
     }
-    
     if((strcmp(invite_status, "ACCEPT") == 0 || strcmp(invite_status, "REJECT") == 0 ) && original_sender_player->in_game == 0 && reply_player->in_game == 0) {
         create_message(&response, MSG_OK, "Response sent.");
         serialize_message(&response, response_buffer);
@@ -221,7 +163,6 @@ int process_request_invite_reply(Server *server, int client_index, BSMessage *re
         create_message(&invite_result, MSG_INVITE_RESULT, invite_result_buffer);
         serialize_message(&invite_result, invite_result_buffer);
         send(original_sender_player->socket_fd, invite_result_buffer, strlen(invite_result_buffer), 0);
-
         if (strcmp(invite_status, "ACCEPT") == 0) {
             // Create a new game session
             game_session_t *session = add_game_session(server->game_session_table, original_sender_player, reply_player);
@@ -249,8 +190,94 @@ int process_request_invite_reply(Server *server, int client_index, BSMessage *re
         create_message(&response, MSG_ERROR, "Invalid response format or one player is already in game.");
         serialize_message(&response, response_buffer);
         send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
-
         return -1;
     }
     return 0;
+}
+
+int process_request_attack(Server *server, int client_index, BSMessage *request) {
+    BSMessage response;
+    char response_buffer[BUFFER_SIZE];
+    Player *existing_player = get_player_by_socket(server->player_table, server->clients[client_index].fd);
+    if (!existing_player) {
+        create_message(&response, MSG_ERROR, "You are not logged in.");
+        serialize_message(&response, response_buffer);
+        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        return -1;
+    }
+    game_session_t *session = find_game_session(server->game_session_table, existing_player);
+    if (!session) {
+        create_message(&response, MSG_ERROR, "You are not in a game.");
+        serialize_message(&response, response_buffer);
+        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        return -1;
+    }
+    if (strcmp(existing_player->username, session->current_turn == 0 ? session->player1->username : session->player2->username) != 0) {
+        create_message(&response, MSG_ERROR, "It's not your turn.");
+        serialize_message(&response, response_buffer);
+        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        return -1;
+    }
+    int x, y;
+    sscanf(request->data, "%d %d", &x, &y);
+    attack_result_t result = process_attack(session, x, y);
+    create_message(&response, MSG_ATTACK_RESULT, attack_result_to_str(result));
+    serialize_message(&response, response_buffer);
+    send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+    // Check if the game is over
+    if (session->winner != -1) {
+        char game_over_buffer[BUFFER_SIZE];
+        snprintf(game_over_buffer, BUFFER_SIZE, "%s", session->winner == 0 ? session->player1->username : session->player2->username);
+        print_game_sessions(server->game_session_table);
+        create_message(&response, MSG_GAME_OVER, game_over_buffer);
+        serialize_message(&response, response_buffer);
+        send(session->player1->socket_fd, response_buffer, strlen(response_buffer), 0);
+        send(session->player2->socket_fd, response_buffer, strlen(response_buffer), 0);
+        remove_game_session(server->game_session_table, existing_player);
+        return 0;
+    }
+    // Notify the player that has the turn
+    BSMessage turn_notification;
+    char turn_buffer[BUFFER_SIZE];
+    snprintf(turn_buffer, BUFFER_SIZE, "%s", session->current_turn == 0 ? session->player1->username : session->player2->username);
+    create_message(&turn_notification, MSG_TURN, turn_buffer);
+    serialize_message(&turn_notification, turn_buffer);
+    send(session->player1->socket_fd, turn_buffer, strlen(turn_buffer), 0);
+    send(session->player2->socket_fd, turn_buffer, strlen(turn_buffer), 0);
+    return 0;
+}
+
+int process_request_place_ships(Server *server, int client_index) {
+    BSMessage response;
+    char response_buffer[BUFFER_SIZE];
+    Player *existing_player = get_player_by_socket(server->player_table, server->clients[client_index].fd);
+    if (!existing_player) {
+        create_message(&response, MSG_ERROR, "You are not logged in.");
+        serialize_message(&response, response_buffer);
+        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        return -1;
+    }
+    game_session_t *session = find_game_session(server->game_session_table, existing_player);
+    if (!session) {
+        create_message(&response, MSG_ERROR, "You are not in a game.");
+        serialize_message(&response, response_buffer);
+        send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        return -1;
+    }
+    if (strcmp(existing_player->username, session->player1->username) == 0) {
+        char board_buffer[BUFFER_SIZE];
+        // test the get_ships_str function
+        get_ships_str(&session->player1_board);
+        create_message(&response, MSG_OK, "Test ships player 1");
+        serialize_message(&response, board_buffer);
+        send(server->clients[client_index].fd, board_buffer, strlen(board_buffer), 0);
+        return 0;
+    } else {
+        char board_buffer[BUFFER_SIZE];
+        get_ships_str(&session->player1_board);
+        create_message(&response, MSG_OK, "Test ships player 2");
+        serialize_message(&response, board_buffer);
+        send(server->clients[client_index].fd, board_buffer, strlen(board_buffer), 0);
+        return 0;
+    }
 }
