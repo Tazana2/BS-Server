@@ -199,6 +199,10 @@ void process_message(Server *server, int client_index, const char *buffer) {
             process_request_place_ships(server, client_index);
             break;
         }
+        case MSG_SURRENDER: {
+            process_request_surrender(server, client_index);
+            break;
+        }
         default:
             printf("Unknown message: %s\n", request.data);
             create_message(&response, MSG_ERROR, "Unknown command.");

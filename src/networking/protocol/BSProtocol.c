@@ -19,10 +19,10 @@ const char *message_type_to_str(MessageType header) {
         case MSG_ATTACK:              return "ATTACK";
         case MSG_ATTACK_RESULT:       return "ATTACK_RESULT";
         case MSG_TURN:                return "TURN";
+        case MSG_SURRENDER:           return "SURRENDER";
         case MSG_GAME_OVER:           return "GAME_OVER";
         // Status and error messages
         case MSG_OK:                  return "OK";
-        case MSG_ACK:                 return "ACK";
         case MSG_ERROR:               return "ERROR";
         case MSG_UNKNOWN:             return "UNKNOWN";
         default:                      return "UNKNOWN_MESSAGE_TYPE";
@@ -45,10 +45,10 @@ MessageType get_message_type(const char *header) {
     if (strcmp(header, "ATTACK") == 0)              return MSG_ATTACK;
     if (strcmp(header, "ATTACK_RESULT") == 0)       return MSG_ATTACK_RESULT;
     if (strcmp(header, "TURN") == 0)                return MSG_TURN;
+    if (strcmp(header, "SURRENDER") == 0)           return MSG_SURRENDER;
     if (strcmp(header, "GAME_OVER") == 0)           return MSG_GAME_OVER;
     // Status and error messages
     if (strcmp(header, "OK") == 0)                  return MSG_OK;
-    if (strcmp(header, "ACK") == 0)                 return MSG_ACK;
     if (strcmp(header, "ERROR") == 0)               return MSG_ERROR;
     return MSG_UNKNOWN; 
 }

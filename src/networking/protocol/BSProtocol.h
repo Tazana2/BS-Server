@@ -20,11 +20,11 @@ typedef enum {
     MSG_ATTACK,
     MSG_ATTACK_RESULT,
     MSG_TURN,
+    MSG_SURRENDER,
     MSG_GAME_OVER,
     // Status and error messages
     MSG_ERROR,
     MSG_OK,
-    MSG_ACK,
     MSG_UNKNOWN
 } MessageType;
 
