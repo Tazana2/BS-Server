@@ -16,9 +16,9 @@ typedef enum {
     MSG_INVITE_RESULT,
     // Game
     MSG_GAME_START,
+    MSG_PLACE_SHIPS,
     MSG_ATTACK,
     MSG_ATTACK_RESULT,
-    MSG_ATTACK_INCOMING,
     MSG_TURN,
     MSG_GAME_OVER,
     // Status and error messages
