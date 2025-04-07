@@ -107,11 +107,11 @@ char *get_ships_str(board_t *board) {
     for (int i = 0; i < board->ship_count; i++) {
         Ship *ship = &board->ships[i];
         char ship_info[64];
-        snprintf(ship_info, sizeof(ship_info), "%d,%d,%d,%d-", ship->x_start, ship->y_start, ship->x_end, ship->y_end);
+        snprintf(ship_info, sizeof(ship_info), "%d,%d,%d,%d ", ship->x_start, ship->y_start, ship->x_end, ship->y_end);
         strcat(ships_str, ship_info);
     }
 
-    // Remove the last '-' character
+    // Remove the last ' ' character
     if (strlen(ships_str) > 0) {
         ships_str[strlen(ships_str) - 1] = '\0';
     }
