@@ -33,6 +33,6 @@ typedef struct {
 void initialize_board(board_t *board);
 int is_valid_position(board_t *board, int x_start, int y_start, int x_end, int y_end);
 attack_result_t attack(board_t *board, int x, int y);
-int is_ship_sunk(board_t *board, int ship_index);
+void get_ships_str(board_t *board);
 
 #endif // BOARD_H

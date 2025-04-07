@@ -89,3 +89,13 @@ attack_result_t attack(board_t *board, int x, int y) {
         return MISS;
     }
 }
+
+// Prints the ships in the format "x_start,y_start,x_end,y_end"
+void get_ships_str(board_t *board) {
+    for (int i = 0; i < board->ship_count; i++) {
+        Ship ship = board->ships[i];
+        printf("%d-", i);
+        printf("%d,%d,%d,%d\n", ship.x_start, ship.y_start, ship.x_end, ship.y_end);
+    }
+    printf("\n");
+}
