@@ -2,23 +2,22 @@
 
 void initialize_board(board_t *board) {
     memset(board->grid, '~', sizeof(board->grid)); // Fill the grid with water
-    // const int ship_sizes[NUM_SHIPS] = {5, 4, 3, 3, 2, 2, 1, 1, 1}; // The 9 ships that are requiered
-    const int ship_sizes[NUM_SHIPS] = {1}; // Debugging purposes
-    board->ship_count = NUM_SHIPS;
+    const int ship_sizes[NUM_SHIPS] = {5, 4, 3, 3, 2, 2, 1, 1, 1}; // The 9 ships that are requiered
+    // const int ship_sizes[NUM_SHIPS] = {1}; // Debugging purposes
     board->sunk_count = 0;
-
-    srand(time(NULL));
-
+    
     int placed_ships = 0;
     while (placed_ships < NUM_SHIPS) {
         int size = ship_sizes[placed_ships];
         int x_start, y_start, x_end, y_end;
         int horizontal = rand() % 2;
-
+        
         do {
             x_start = rand() % 10;
             y_start = rand() % 10;
-
+            printf("X = %d \n", x_start);
+            printf("Y = %d \n", y_start);
+            
             if (horizontal) {
                 x_end = x_start;
                 y_end = y_start + size - 1;
@@ -29,13 +28,24 @@ void initialize_board(board_t *board) {
         } while (x_end >= 10 || y_end >= 10 || !is_valid_position(board, x_start, y_start, x_end, y_end));
         
         board->ships[placed_ships] = (Ship){x_start, y_start, x_end, y_end, 0, size};
-        for (int x = x_start; x <= x_end; x++) {
+        if (x_start == x_end) {
+            // Barco horizontal
             for (int y = y_start; y <= y_end; y++) {
-                board->grid[x][y] = 'S';
+                board->grid[x_start][y] = 'S';
+            }
+        } else {
+            // Barco vertical
+            for (int x = x_start; x <= x_end; x++) {
+                board->grid[x][y_start] = 'S';
             }
         }
+        
         placed_ships++;
     }
+
+    board->ship_count = placed_ships;
+    printf("Ships Count: %d", board->ship_count);
+
     // Print the board for debugging
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
@@ -94,8 +104,8 @@ attack_result_t attack(board_t *board, int x, int y) {
 void get_ships_str(board_t *board) {
     for (int i = 0; i < board->ship_count; i++) {
         Ship ship = board->ships[i];
-        printf("%d-", i);
-        printf("%d,%d,%d,%d\n", ship.x_start, ship.y_start, ship.x_end, ship.y_end);
+        printf("Ship %d: Start=(%d,%d), End=(%d,%d)\n", 
+               i, ship.x_start, ship.y_start, ship.x_end, ship.y_end);
     }
-    printf("\n");
+    printf("Total ships: %d\n\n", board->ship_count);
 }

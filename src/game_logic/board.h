@@ -8,7 +8,7 @@
 
 #define BOARD_SIZE 10
 // #define NUM_SHIPS 9
-#define NUM_SHIPS 1 // Debugging purposes
+#define NUM_SHIPS 9 // Debugging purposes
 
 typedef enum {
     HIT,

@@ -211,6 +211,7 @@ void process_message(Server *server, int client_index, const char *buffer) {
 }
 
 int main() {
+    srand(time(NULL));
     Server *server = create_server(SERVER_PORT);
     
     if (!server) {
