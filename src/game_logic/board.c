@@ -15,8 +15,8 @@ void initialize_board(board_t *board) {
         do {
             x_start = rand() % 10;
             y_start = rand() % 10;
-            printf("X = %d \n", x_start);
-            printf("Y = %d \n", y_start);
+            // printf("X = %d \n", x_start);
+            // printf("Y = %d \n", y_start);
             
             if (horizontal) {
                 x_end = x_start;
@@ -99,12 +99,22 @@ attack_result_t attack(board_t *board, int x, int y) {
     return MISS;
 }
 
-// Prints the ships in the format "x_start,y_start,x_end,y_end"
-void get_ships_str(board_t *board) {
+// Returns the ships in the format "x_start,y_start,x_end,y_end-..."
+char *get_ships_str(board_t *board) {
+    char *ships_str = malloc(MAX_DATA_SIZE);
+    ships_str[0] = '\0'; // Initialize the string
+
     for (int i = 0; i < board->ship_count; i++) {
-        Ship ship = board->ships[i];
-        printf("Ship %d: Start=(%d,%d), End=(%d,%d)\n", 
-                i, ship.x_start, ship.y_start, ship.x_end, ship.y_end);
+        Ship *ship = &board->ships[i];
+        char ship_info[64];
+        snprintf(ship_info, sizeof(ship_info), "%d,%d,%d,%d-", ship->x_start, ship->y_start, ship->x_end, ship->y_end);
+        strcat(ships_str, ship_info);
     }
-    printf("Total ships: %d\n\n", board->ship_count);
+
+    // Remove the last '-' character
+    if (strlen(ships_str) > 0) {
+        ships_str[strlen(ships_str) - 1] = '\0';
+    }
+
+    return ships_str;
 }

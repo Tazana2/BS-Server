@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include "../networking/protocol/BSProtocol.h"
 
 #define BOARD_SIZE 10
 // #define NUM_SHIPS 9
@@ -33,6 +34,6 @@ typedef struct {
 void initialize_board(board_t *board);
 int is_valid_position(board_t *board, int x_start, int y_start, int x_end, int y_end);
 attack_result_t attack(board_t *board, int x, int y);
-void get_ships_str(board_t *board);
+char *get_ships_str(board_t *board);
 
 #endif // BOARD_H

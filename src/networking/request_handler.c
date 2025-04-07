@@ -267,15 +267,13 @@ int process_request_place_ships(Server *server, int client_index) {
     if (strcmp(existing_player->username, session->player1->username) == 0) {
         char board_buffer[BUFFER_SIZE];
         // test the get_ships_str function
-        get_ships_str(&session->player1_board);
-        create_message(&response, MSG_OK, "Test ships player 1");
+        create_message(&response, MSG_OK, get_ships_str(&session->player1_board));
         serialize_message(&response, board_buffer);
         send(server->clients[client_index].fd, board_buffer, strlen(board_buffer), 0);
         return 0;
     } else {
         char board_buffer[BUFFER_SIZE];
-        get_ships_str(&session->player1_board);
-        create_message(&response, MSG_OK, "Test ships player 2");
+        create_message(&response, MSG_OK, get_ships_str(&session->player2_board));
         serialize_message(&response, board_buffer);
         send(server->clients[client_index].fd, board_buffer, strlen(board_buffer), 0);
         return 0;
