@@ -47,7 +47,7 @@ attack_result_t process_attack(game_session_t *session, int x, int y) {
 
 game_session_t *add_game_session(GameSessionTable *table, Player *player1, Player *player2) {
     if (!table) return NULL;
-    game_session_t *new_session = (game_session_t *)malloc(sizeof(game_session_t));
+    game_session_t *new_session = malloc(sizeof(game_session_t));
     if (!new_session) return NULL;
 
     new_session->player1 = player1;

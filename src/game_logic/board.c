@@ -44,7 +44,7 @@ void initialize_board(board_t *board) {
     }
 
     board->ship_count = placed_ships;
-    printf("Ships Count: %d", board->ship_count);
+    printf("Ships Count: %d\n", board->ship_count);
 
     // Print the board for debugging
     for (int i = 0; i < 10; i++) {
@@ -79,25 +79,24 @@ attack_result_t attack(board_t *board, int x, int y) {
         for (int i = 0; i < board->ship_count; i++) { 
             Ship *ship = &board->ships[i];
 
-            if (ship->x_start == ship->x_end) { // Horizontal
-                if (x == ship->x_start && y >= ship->y_start && y <= ship->y_end) {
-                    ship->hits++;
-                }
-            } else { // Vertical
-                if (y == ship->y_start && x >= ship->x_start && x <= ship->x_end) {
-                    ship->hits++;
-                }
-            }
+            int x_min = (ship->x_start < ship->x_end) ? ship->x_start : ship->x_end;
+            int x_max = (ship->x_start > ship->x_end) ? ship->x_start : ship->x_end;
+            int y_min = (ship->y_start < ship->y_end) ? ship->y_start : ship->y_end;
+            int y_max = (ship->y_start > ship->y_end) ? ship->y_start : ship->y_end;
 
-            if (ship->hits == ship->size) {
-                board->sunk_count++;
-                return SINK;
+            // Check if the (x, y) falls within the ship's range
+            if (x >= x_min && x <= x_max && y >= y_min && y <= y_max) {
+                ship->hits++;
+
+                if (ship->hits == ship->size) {
+                    board->sunk_count++;
+                    return SINK;
+                }
+                return HIT;
             }
         }
-        return HIT;
-    } else {
-        return MISS;
     }
+    return MISS;
 }
 
 // Prints the ships in the format "x_start,y_start,x_end,y_end"
@@ -105,7 +104,7 @@ void get_ships_str(board_t *board) {
     for (int i = 0; i < board->ship_count; i++) {
         Ship ship = board->ships[i];
         printf("Ship %d: Start=(%d,%d), End=(%d,%d)\n", 
-               i, ship.x_start, ship.y_start, ship.x_end, ship.y_end);
+                i, ship.x_start, ship.y_start, ship.x_end, ship.y_end);
     }
     printf("Total ships: %d\n\n", board->ship_count);
 }
