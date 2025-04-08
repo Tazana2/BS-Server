@@ -4,7 +4,7 @@
 #include "aux.h"
 #include "request_handler.h"
 
-Server *create_server(int port);
+Server *create_server(const char *ip, int port);
 void run_server(Server *server);
 void stop_server(Server *server);
 void accept_new_client(Server *server);

@@ -1,6 +1,6 @@
 #include "server.h"
 
-Server *create_server(int port) {
+Server *create_server(const char *ip, int port) {
     Server *server = (Server *)malloc(sizeof(Server));
     if (!server) {
         perror("ERROR: Couldn't allocate memory for server.");
@@ -30,10 +30,19 @@ Server *create_server(int port) {
     }
     int opt = 1;
     setsockopt(server->server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
-    server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(port);
+    if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0) {
+        perror("ERROR: Invalid IP address.");
+        close(server->server_fd);
+        destroy_player_table(server->player_table);
+        destroy_invitation_table(server->invitation_table);
+        destroy_game_session_table(server->game_session_table);
+        free(server);
+        return NULL;
+    }
     
     if (bind(server->server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
         perror("ERROR: Something went wrong with bind.");
@@ -60,7 +69,7 @@ Server *create_server(int port) {
         server->clients[i].events = POLLIN;
     }
     
-    printf("Server running on port: %d.\n", port);
+    printf("Server running on: %s:%d.\n", ip, port);
     return server;
 }
 
@@ -212,18 +221,4 @@ void process_message(Server *server, int client_index, const char *buffer) {
     }
     memset(&response, 0, sizeof(BSMessage));
     memset(response_buffer, 0, sizeof(response_buffer));
-}
-
-int main() {
-    srand(time(NULL));
-    Server *server = create_server(SERVER_PORT);
-    
-    if (!server) {
-        fprintf(stderr, "Something went wrong while starting the server.\n");
-        return EXIT_FAILURE;
-    }
-
-    run_server(server);
-    stop_server(server);
-    return EXIT_SUCCESS;
 }
