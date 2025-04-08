@@ -1,9 +1,8 @@
 #ifndef PLAYER_TABLE_H
 #define PLAYER_TABLE_H
 
+#include <stdio.h>
 #include "player.h"
-#include <stdlib.h>
-#include <string.h>
 
 #define MAX_PLAYERS 100
 

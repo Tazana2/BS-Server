@@ -1,4 +1,4 @@
-#include "server.h"
+#include "../utils/headers/server.h"
 
 Server *create_server(const char *ip, int port) {
     Server *server = (Server *)malloc(sizeof(Server));

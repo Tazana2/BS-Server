@@ -1,11 +1,9 @@
 #ifndef GAME_SESSION_H
 #define GAME_SESSION_H
 
-#include "board.h"
-#include "../game_models/player.h"
-#include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include "board.h"
+#include "player.h"
 
 #define MAX_GAME_SESSION 50
 

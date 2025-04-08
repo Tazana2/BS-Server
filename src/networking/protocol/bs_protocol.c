@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <string.h>
-#include "BSProtocol.h"
+#include "../../utils/headers/bs_protocol.h"
 
 const char *message_type_to_str(MessageType header) {
     switch (header) {

@@ -1,4 +1,4 @@
-#include "invitation_table.h"
+#include "../utils/headers/invitation_table.h"
 
 InvitationTable *create_invitation_table() {
     InvitationTable *table = (InvitationTable *)malloc(sizeof(InvitationTable));

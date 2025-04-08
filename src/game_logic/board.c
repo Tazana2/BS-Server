@@ -1,4 +1,4 @@
-#include "board.h"
+#include "../utils/headers/board.h"
 
 void initialize_board(board_t *board) {
     memset(board->grid, '~', sizeof(board->grid)); // Fill the grid with water

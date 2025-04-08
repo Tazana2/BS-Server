@@ -1,6 +1,9 @@
 #ifndef BS_PROTOCOL_H
 #define BS_PROTOCOL_H
 
+#include <stdio.h>
+#include <string.h>
+
 #define MAX_MESSAGE_SIZE 256
 #define MAX_DATA_SIZE 200
 

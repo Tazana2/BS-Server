@@ -1,4 +1,4 @@
-#include "game_session.h"
+#include "../utils/headers/game_session.h"
 
 GameSessionTable *create_game_session_table() {
     GameSessionTable *table = (GameSessionTable *)malloc(sizeof(GameSessionTable));

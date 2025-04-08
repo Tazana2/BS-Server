@@ -1,6 +1,4 @@
-#include "player.h"
-#include <stdlib.h>
-#include <string.h>
+#include "../utils/headers/player.h"
 
 Player *create_player(const char *username, int socket_fd) {
     Player *player = (Player *)malloc(sizeof(Player));

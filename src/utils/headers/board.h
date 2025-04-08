@@ -1,11 +1,9 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
-#include "../networking/protocol/BSProtocol.h"
+#include "bs_protocol.h"
 
 #define BOARD_SIZE 10
 // #define NUM_SHIPS 9

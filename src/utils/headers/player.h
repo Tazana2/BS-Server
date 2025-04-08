@@ -1,6 +1,9 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include <stdlib.h>
+#include <string.h>
+
 #define USERNAME_MAX_LEN 32
 
 typedef struct {

@@ -1,16 +1,13 @@
 #ifndef AUX_H
 #define AUX_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <poll.h>
-#include "../game_models/player_table.h"
-#include "../game_models/invitation_table.h"
-#include "../game_logic/game_session.h"
-#include "protocol/BSProtocol.h"
+#include "player_table.h"
+#include "invitation_table.h"
+#include "game_session.h"
+#include "bs_protocol.h"
 
 #define MAX_CLIENTS 10
 #define SERVER_PORT 8080

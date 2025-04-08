@@ -1,5 +1,4 @@
-#include "player_table.h"
-#include <stdio.h>
+#include "../utils/headers/player_table.h"
 
 // Simple hash function for the player username
 static unsigned int hash_function(const char *username) {
