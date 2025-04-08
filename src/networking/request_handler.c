@@ -206,6 +206,7 @@ int process_request_attack(Server *server, int client_index, BSMessage *request)
         return -1;
     }
     game_session_t *session = find_game_session(server->game_session_table, existing_player);
+    Player *defender = strcmp(existing_player->username, session->player1->username) == 0 ? session->player2 : session->player1;
     if (!session) {
         create_message(&response, MSG_ERROR, "You are not in a game.");
         serialize_message(&response, response_buffer);
@@ -221,9 +222,11 @@ int process_request_attack(Server *server, int client_index, BSMessage *request)
     int x, y;
     sscanf(request->data, "%d %d", &x, &y);
     attack_result_t result = process_attack(session, x, y);
-    create_message(&response, MSG_ATTACK_RESULT, attack_result_to_str(result));
+    snprintf(response_buffer, BUFFER_SIZE, "%s %d %d %s",existing_player->username, x, y, attack_result_to_str(result));
+    create_message(&response, MSG_ATTACK_RESULT, response_buffer);
     serialize_message(&response, response_buffer);
     send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+    send(defender->socket_fd, response_buffer, strlen(response_buffer), 0);
     // Check if the game is over
     if (session->winner != -1) {
         char game_over_buffer[BUFFER_SIZE];
