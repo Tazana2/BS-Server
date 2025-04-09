@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "player.h"
+#include "logger.h"
 
 #define MAX_PLAYERS 100
 

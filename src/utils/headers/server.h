@@ -3,6 +3,7 @@
 
 #include "aux.h"
 #include "request_handler.h"
+#include "logger.h"
 
 Server *create_server(const char *ip, int port);
 void run_server(Server *server);

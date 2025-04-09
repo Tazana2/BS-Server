@@ -90,6 +90,7 @@ int remove_player(PlayerTable *table, const int socket_fd) {
                 table->table[index] = node->next;
             }
             printf("User (%s) disconnected.\n", node->player->username);
+            log_info("User (%s) disconnected.\n", node->player->username);
             destroy_player(node->player);
             free(node);
             return 1; // Player removed

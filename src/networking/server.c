@@ -3,6 +3,7 @@
 Server *create_server(const char *ip, int port) {
     Server *server = (Server *)malloc(sizeof(Server));
     if (!server) {
+        log_error("Couldn't allocate memory for server.\n");
         perror("ERROR: Couldn't allocate memory for server.");
         return NULL;
     }
@@ -11,6 +12,7 @@ Server *create_server(const char *ip, int port) {
     server->invitation_table = create_invitation_table();
     server->game_session_table = create_game_session_table();
     if (!server->player_table || !server->invitation_table || !server->game_session_table) {
+        log_error("Something went wrong with player, game or invitation table.\n");
         perror("ERROR: Something went wrong with player, game or invitation table.");
         destroy_player_table(server->player_table);
         destroy_invitation_table(server->invitation_table);
@@ -21,6 +23,7 @@ Server *create_server(const char *ip, int port) {
     
     server->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server->server_fd == -1) {
+        log_error("Something went wrong with socket.\n");
         perror("ERROR: Something went wrong with socket.");
         destroy_player_table(server->player_table);
         destroy_invitation_table(server->invitation_table);
@@ -35,6 +38,7 @@ Server *create_server(const char *ip, int port) {
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
     if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0) {
+        log_error("Invalid IP address.\n");
         perror("ERROR: Invalid IP address.");
         close(server->server_fd);
         destroy_player_table(server->player_table);
@@ -45,6 +49,7 @@ Server *create_server(const char *ip, int port) {
     }
     
     if (bind(server->server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1) {
+        log_error("Something went wrong with bind.\n");
         perror("ERROR: Something went wrong with bind.");
         close(server->server_fd);
         destroy_player_table(server->player_table);
@@ -53,8 +58,9 @@ Server *create_server(const char *ip, int port) {
         free(server);
         return NULL;
     }
-    
+// ----------------------------------------------------
     if (listen(server->server_fd, MAX_CLIENTS) == -1) {
+        log_error("Something went wrong with listen.\n");
         perror("ERROR: Something went wrong with listen.");
         close(server->server_fd);
         destroy_player_table(server->player_table);
@@ -70,6 +76,7 @@ Server *create_server(const char *ip, int port) {
     }
     
     printf("Server running on: %s:%d.\n", ip, port);
+    log_info("Server running on: %s:%d.\n", ip, port);
     return server;
 }
 
@@ -83,6 +90,7 @@ void run_server(Server *server) {
         int activity = poll(server->clients, MAX_CLIENTS, -1);
         if (activity == -1) {
             perror("ERROR: Something went wrong with poll.");
+            log_error("Something went wrong with poll.\n");
             break;
         }
         if (server->clients[0].revents & POLLIN) {
@@ -107,13 +115,16 @@ void run_server(Server *server) {
                             serialize_message(&game_over, game_over_buffer);
                             if (strcmp(session->player1->username, player->username) == 0) {
                                 send(session->player2->socket_fd, game_over_buffer, strlen(game_over_buffer), 0);
+                                log_info("%s\n", game_over_buffer);
                             } else {
                                 send(session->player1->socket_fd, game_over_buffer, strlen(game_over_buffer), 0);
+                                log_info("%s\n", game_over_buffer);
                             }
                             remove_game_session(server->game_session_table, player);
                         }
                     }
                     printf("Client disconnected on socket descriptor: %d.\n", server->clients[i].fd);
+                    log_info("Client disconnected on socket descriptor: %d.\n", server->clients[i].fd);
                     close(server->clients[i].fd);
                     server->clients[i].fd = -1;
                 } else {
@@ -141,6 +152,7 @@ void stop_server(Server *server) {
     
     free(server);
     printf("Server Stopped.\n");
+    log_info("Server Stopped.\n");
 }
 
 void accept_new_client(Server *server) {
@@ -150,6 +162,7 @@ void accept_new_client(Server *server) {
     
     if (new_socket == -1) {
         perror("ERROR: Something went wrong with accept.");
+        log_error("Something went wrong with accept.\n");
         return;
     }
     
@@ -157,11 +170,13 @@ void accept_new_client(Server *server) {
         if (server->clients[i].fd == -1) {
             server->clients[i].fd = new_socket;
             printf("New connection on socket descriptor: %d.\n", new_socket);
+            log_info("New connection on socket descriptor: %d.\n", new_socket);
             return;
         }
     }
     
     printf("Server is full, rejecting connection.\n");
+    log_info("Server is full, rejecting connection.\n");
     close(new_socket);
 }
 
@@ -169,10 +184,12 @@ void process_message(Server *server, int client_index, const char *buffer) {
     BSMessage request, response;
     if (parse_message(&request, buffer) == -1) {
         printf("Couldn't parse the request.\n");
+        log_error("Couldn't parse the request.\n");
         char response_buffer[BUFFER_SIZE];
         create_message(&response, MSG_ERROR, "Invalid request format.");
         serialize_message(&response, response_buffer);
         send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+        log_info("%s\n", response_buffer);
         return;
     }
     request.data[strcspn(request.data, "\n")] = 0;
@@ -214,9 +231,11 @@ void process_message(Server *server, int client_index, const char *buffer) {
         }
         default:
             printf("Unknown message: %s\n", request.data);
+            log_info("Unknown message: %s\n", request.data);
             create_message(&response, MSG_ERROR, "Unknown command.");
             serialize_message(&response, response_buffer);
             send(server->clients[client_index].fd, response_buffer, strlen(response_buffer), 0);
+            log_info("%s\n", response_buffer);
             break;
     }
     memset(&response, 0, sizeof(BSMessage));

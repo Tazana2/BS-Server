@@ -17,6 +17,7 @@ SRCS = $(GAME_LOGIC_DIR)/board.c \
        $(PROTOCOL_DIR)/bs_protocol.c \
        $(NETWORKING_DIR)/server.c \
        $(NETWORKING_DIR)/request_handler.c \
+       utils/logger.c \
        main.c \
 
 # Archivos objeto
