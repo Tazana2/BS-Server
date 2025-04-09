@@ -2,7 +2,6 @@
 #define REQUEST_HANDLER_H
 
 #include "aux.h"
-#include "logger.h"
 
 int process_request_login(Server *server, int client_index, BSMessage *request);
 int process_request_logout(Server *server, int client_index);

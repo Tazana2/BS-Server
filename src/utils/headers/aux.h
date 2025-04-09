@@ -8,6 +8,7 @@
 #include "invitation_table.h"
 #include "game_session.h"
 #include "bs_protocol.h"
+#include "logger.h"
 
 #define MAX_CLIENTS 10
 #define SERVER_PORT 8080

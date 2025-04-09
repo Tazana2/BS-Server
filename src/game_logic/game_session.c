@@ -9,6 +9,29 @@ GameSessionTable *create_game_session_table() {
     return table;
 }
 
+game_session_t *add_game_session(GameSessionTable *table, Player *player1, Player *player2) {
+    if (!table) return NULL;
+    game_session_t *new_session = malloc(sizeof(game_session_t));
+    if (!new_session) return NULL;
+
+    new_session->player1 = player1;
+    new_session->player2 = player2;
+    new_session->player1->in_game = 1;
+    new_session->player2->in_game = 1;
+
+    // printf("Player 1 board:\n"); // For debugging purposes
+    initialize_board(&new_session->player1_board);
+    // printf("Player 2 board:\n"); // For debugging purposes
+    initialize_board(&new_session->player2_board);
+    
+    new_session->current_turn = 0; // 0 for player1, 1 for player2
+    new_session->winner = -1; // -1 indicates no winner yet
+    new_session->stage = ATTACKING; // Assuming the game starts in the attacking stage for testing purposes
+    new_session->next = table->head;
+    table->head = new_session;
+    return new_session;
+}
+
 game_session_t *find_game_session(GameSessionTable *table, Player *player) {
     if (!table) return NULL;
     game_session_t *current = table->head;
@@ -42,30 +65,12 @@ attack_result_t process_attack(game_session_t *session, int x, int y) {
     }
 
     session->current_turn = 1 - session->current_turn; // Switch turns
+    if (session->current_turn == 0) {
+        session->player1->turn_start_time = time(NULL);
+    } else {
+        session->player2->turn_start_time = time(NULL);
+    }
     return result;
-}
-
-game_session_t *add_game_session(GameSessionTable *table, Player *player1, Player *player2) {
-    if (!table) return NULL;
-    game_session_t *new_session = malloc(sizeof(game_session_t));
-    if (!new_session) return NULL;
-
-    new_session->player1 = player1;
-    new_session->player2 = player2;
-    new_session->player1->in_game = 1;
-    new_session->player2->in_game = 1;
-
-    printf("Player 1 board:\n");
-    initialize_board(&new_session->player1_board);
-    printf("Player 2 board:\n");
-    initialize_board(&new_session->player2_board);
-    
-    new_session->current_turn = 0; // 0 for player1, 1 for player2
-    new_session->winner = -1; // -1 indicates no winner yet
-    new_session->stage = ATTACKING; // Assuming the game starts in the attacking stage for testing purposes
-    new_session->next = table->head;
-    table->head = new_session;
-    return new_session;
 }
 
 const char *attack_result_to_str(attack_result_t result) {

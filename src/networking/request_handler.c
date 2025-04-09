@@ -206,6 +206,8 @@ int process_request_invite_reply(Server *server, int client_index, BSMessage *re
             serialize_message(&turn_notification, turn_buffer);
             send(original_sender_player->socket_fd, turn_buffer, strlen(turn_buffer), 0);
             send(reply_player->socket_fd, turn_buffer, strlen(turn_buffer), 0);
+            // Start the turn timer for the player who has the turn
+            original_sender_player->turn_start_time = time(NULL);
             log_info("%s\n", turn_buffer);
             printf("Game session created between (%s) and (%s).\n", original_sender_player->username, reply_player->username);
             log_info("Game session created between (%s) and (%s).\n", original_sender_player->username, reply_player->username);

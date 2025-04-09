@@ -44,16 +44,16 @@ void initialize_board(board_t *board) {
     }
 
     board->ship_count = placed_ships;
-    printf("Ships Count: %d\n", board->ship_count);
+    // printf("Ships Count: %d\n", board->ship_count);
 
     // Print the board for debugging
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            printf("%c ", board->grid[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
+    // for (int i = 0; i < 10; i++) {
+    //     for (int j = 0; j < 10; j++) {
+    //         printf("%c ", board->grid[i][j]);
+    //     }
+    //     printf("\n");
+    // }
+    // printf("\n");
 }
 
 int is_valid_position(board_t *board, int x_start, int y_start, int x_end, int y_end) {

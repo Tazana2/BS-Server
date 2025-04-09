@@ -58,7 +58,6 @@ Server *create_server(const char *ip, int port) {
         free(server);
         return NULL;
     }
-// ----------------------------------------------------
     if (listen(server->server_fd, MAX_CLIENTS) == -1) {
         log_error("Something went wrong with listen.\n");
         perror("ERROR: Something went wrong with listen.");
@@ -87,7 +86,7 @@ void run_server(Server *server) {
         server->clients[0].fd = server->server_fd;
         server->clients[0].events = POLLIN;
         
-        int activity = poll(server->clients, MAX_CLIENTS, -1);
+        int activity = poll(server->clients, MAX_CLIENTS, 100);
         if (activity == -1) {
             perror("ERROR: Something went wrong with poll.");
             log_error("Something went wrong with poll.\n");
@@ -100,10 +99,10 @@ void run_server(Server *server) {
         for (int i = 1; i < MAX_CLIENTS; i++) {
             if (server->clients[i].fd != -1 && (server->clients[i].revents & POLLIN)) {
                 char buffer[BUFFER_SIZE];
+                Player *player = get_player_by_socket(server->player_table, server->clients[i].fd);
                 int bytes_received = read(server->clients[i].fd, buffer, BUFFER_SIZE);
                 
                 if (bytes_received <= 0) {
-                    Player *player = get_player_by_socket(server->player_table, server->clients[i].fd);
                     if (player) {
                         remove_player(server->player_table, server->clients[i].fd);
                         game_session_t *session = find_game_session(server->game_session_table, player);
@@ -130,8 +129,32 @@ void run_server(Server *server) {
                 } else {
                     buffer[bytes_received] = '\0';
                     process_message(server, i, buffer);
-                    print_game_sessions(server->game_session_table);
-                    print_invitations(server->invitation_table);
+                    // print_game_sessions(server->game_session_table); // For debugging purposes
+                    // print_invitations(server->invitation_table); // For debugging purposes
+                }
+            }
+        }
+
+        time_t now = time(NULL);
+
+        for (int i = 1; i < MAX_CLIENTS; i++) {
+            if (server->clients[i].fd != -1) {
+                Player *player = get_player_by_socket(server->player_table, server->clients[i].fd);
+                if (player) {
+                    if (!player->in_game) continue;
+                    game_session_t *session = find_game_session(server->game_session_table, player);
+                    if (strcmp(player->username, session->current_turn == 0 ? session->player1->username : session->player2->username)) continue;
+                    
+                    double elapsed = difftime(now, player->turn_start_time);
+                    if (elapsed > 30.0) {
+                        BSMessage request;
+                        strcpy(request.data, "-1 -1");
+                        request.header = MSG_ATTACK;
+                        process_request_attack(server, i, &request);
+                        printf("Turn expired for player %s.\n", player->username);
+                    } else {
+                        // printf("Turn time left for player %s: %.0f seconds.\n", player->username, 30.0 - elapsed); // For debugging purposes
+                    }
                 }
             }
         }
